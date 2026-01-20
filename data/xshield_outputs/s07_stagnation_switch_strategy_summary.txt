@@ -1,0 +1,1 @@
+The system detected little learning progress over several steps. It provided a guided hint to help the student unblock, then will re-check progress.

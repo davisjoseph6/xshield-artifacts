@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s03_ep1",
+  "session_id": "s03",
+  "timestamp_start": "2026-01-15T10:13:15Z",
+  "timestamp_end": "2026-01-15T10:14:20Z",
+  "trigger": {
+    "trigger_type": "UNCERTAINTY_SPIKE",
+    "threshold": 0.7,
+    "observed_value": 0.86,
+    "trigger_rule_id": "T3"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 1,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Geometry",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Monitor signal uncertainty_mean_last_3",
+      "value": 0.86,
+      "window": "last_3",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e03"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "AMBIGUITY",
+    "confidence": 0.66,
+    "diagnosis_rule_id": "D4"
+  },
+  "recovery_action": {
+    "action_type": "DIAGNOSTIC_ITEM",
+    "parameters": {
+      "concept": "Triangle similarity",
+      "difficulty": 2,
+      "purpose": "disambiguate_rule_choice"
+    },
+    "action_rule_id": "R5"
+  },
+  "expected_effect": {
+    "metric": "uncertainty_mean_last_3",
+    "target_direction": "DOWN",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "The system detected high uncertainty on Triangle similarity. It asked a short diagnostic question to clarify what the student knows, then will adjust the next steps.",
+    "technical_trace": "Trigger T3 fired: UNCERTAINTY_SPIKE observed=0.86 threshold=0.7. Diagnosis D4: AMBIGUITY (0.66). Actions: R5: DIAGNOSTIC_ITEM({'concept': 'Triangle similarity', 'difficulty': 2, 'purpose': 'disambiguate_rule_choice'}). Post-check: uncertainty_mean_last_3=0.55."
+  },
+  "audit": {
+    "scenario_file": "s03_ambiguity_uncertainty_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e04",
+      "evidence_event_ids": [
+        "e08",
+        "e08",
+        "e03"
+      ],
+      "diagnosis_event_id": "e05",
+      "recovery_event_ids": [
+        "e06"
+      ],
+      "post_check_event_id": "e09"
+    }
+  }
+}

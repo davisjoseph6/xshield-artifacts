@@ -1,0 +1,1 @@
+Multiple agents recommended different actions at the same time. The system applied an arbitration rule to choose a safe next step, then will monitor if conflicts reduce.

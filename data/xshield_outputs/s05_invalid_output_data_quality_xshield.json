@@ -1,0 +1,89 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s05_ep1",
+  "session_id": "s05",
+  "timestamp_start": "2026-01-15T10:22:35Z",
+  "timestamp_end": "2026-01-15T10:23:40Z",
+  "trigger": {
+    "trigger_type": "OUTPUT_INVALID",
+    "threshold": 0.05,
+    "observed_value": 0.15,
+    "trigger_rule_id": "T5"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 0,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e01"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Physics",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e01"
+    },
+    {
+      "fact": "Monitor signal invalid_output_rate_last_20",
+      "value": 0.15,
+      "window": "last_20",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e03"
+    },
+    {
+      "fact": "Invalid output detected",
+      "value": "missing_required_field:choices",
+      "window": "episode",
+      "source_event_type": "OUTPUT_INVALID",
+      "source_event_id": "e02"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "DATA_QUALITY",
+    "confidence": 0.63,
+    "diagnosis_rule_id": "D6"
+  },
+  "recovery_action": {
+    "action_type": "DEGRADED_MODE",
+    "parameters": {
+      "mode": "template_questions",
+      "reason": "generator_unreliable"
+    },
+    "action_rule_id": "R8"
+  },
+  "expected_effect": {
+    "metric": "invalid_output_rate_last_20",
+    "target_direction": "DOWN",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "The system detected invalid generated content. It first retried, then switched to a safer degraded mode to keep the session consistent while reducing the risk of further invalid outputs.",
+    "technical_trace": "Trigger T5 fired: OUTPUT_INVALID observed=0.15 threshold=0.05. Diagnosis D6: DATA_QUALITY (0.63). Actions: R7: RETRY({'agent': 'question_generator_agent', 'max_retries': 1}) -> R8: DEGRADED_MODE({'mode': 'template_questions', 'reason': 'generator_unreliable'}). Post-check: invalid_output_rate_last_20=0.02."
+  },
+  "audit": {
+    "scenario_file": "s05_invalid_output_data_quality_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e04",
+      "evidence_event_ids": [
+        "e01",
+        "e01",
+        "e03",
+        "e02"
+      ],
+      "diagnosis_event_id": "e05",
+      "recovery_event_ids": [
+        "e06",
+        "e08"
+      ],
+      "post_check_event_id": "e10"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+The system detected invalid generated content. It first retried, then switched to a safer degraded mode to keep the session consistent while reducing the risk of further invalid outputs.

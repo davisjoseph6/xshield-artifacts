@@ -1,0 +1,1 @@
+The system detected repeated errors on Common denominators (above the allowed threshold). It switched to a short prerequisite check on Common denominators for 2 question(s), then will reassess performance.

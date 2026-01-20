@@ -1,0 +1,88 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s04_ep1",
+  "session_id": "s04",
+  "timestamp_start": "2026-01-15T10:17:40Z",
+  "timestamp_end": "2026-01-15T10:18:45Z",
+  "trigger": {
+    "trigger_type": "AGENT_TIMEOUT",
+    "threshold": 0.1,
+    "observed_value": 0.2,
+    "trigger_rule_id": "T4"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 0,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Programming",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Monitor signal agent_timeout_rate_last_10",
+      "value": 0.2,
+      "window": "last_10",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e03"
+    },
+    {
+      "fact": "Agent timeout",
+      "value": "feedback_agent (2000ms)",
+      "window": "episode",
+      "source_event_type": "AGENT_TIMEOUT",
+      "source_event_id": "e02"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "SYSTEM_FAULT",
+    "confidence": 0.74,
+    "diagnosis_rule_id": "D5"
+  },
+  "recovery_action": {
+    "action_type": "FALLBACK_AGENT",
+    "parameters": {
+      "from_agent": "feedback_agent",
+      "to_agent": "simple_feedback_agent"
+    },
+    "action_rule_id": "R6"
+  },
+  "expected_effect": {
+    "metric": "agent_timeout_rate_last_10",
+    "target_direction": "DOWN",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "A support agent did not respond in time, so the system switched to a backup agent to keep the session running. It will monitor whether timeouts stop after the switch.",
+    "technical_trace": "Trigger T4 fired: AGENT_TIMEOUT observed=0.2 threshold=0.1. Diagnosis D5: SYSTEM_FAULT (0.74). Actions: R6: FALLBACK_AGENT({'from_agent': 'feedback_agent', 'to_agent': 'simple_feedback_agent'}). Post-check: agent_timeout_rate_last_10=0.0."
+  },
+  "audit": {
+    "scenario_file": "s04_agent_timeout_fallback_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e04",
+      "evidence_event_ids": [
+        "e08",
+        "e08",
+        "e03",
+        "e02"
+      ],
+      "diagnosis_event_id": "e05",
+      "recovery_event_ids": [
+        "e06"
+      ],
+      "post_check_event_id": "e09"
+    }
+  }
+}

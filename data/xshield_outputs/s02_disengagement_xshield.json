@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s02_ep1",
+  "session_id": "s02",
+  "timestamp_start": "2026-01-15T10:07:42Z",
+  "timestamp_end": "2026-01-15T10:09:15Z",
+  "trigger": {
+    "trigger_type": "UNCERTAINTY_SPIKE",
+    "threshold": 0.5,
+    "observed_value": 0.75,
+    "trigger_rule_id": "T2"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 2,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e10"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Algebra",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e10"
+    },
+    {
+      "fact": "Monitor signal guess_rate_last_5",
+      "value": 0.75,
+      "window": "last_5",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e04"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "DISENGAGEMENT",
+    "confidence": 0.72,
+    "diagnosis_rule_id": "D3"
+  },
+  "recovery_action": {
+    "action_type": "EASIER_ITEMS",
+    "parameters": {
+      "concept": "Algebra",
+      "difficulty_delta": -1,
+      "n_items": 3
+    },
+    "action_rule_id": "R4"
+  },
+  "expected_effect": {
+    "metric": "engagement_score",
+    "target_direction": "UP",
+    "check_after_steps": 3
+  },
+  "explanation": {
+    "teacher_summary": "The system detected signs of guessing/low engagement on Algebra. It temporarily switched to easier items (3 question(s)) to re-stabilize performance and attention.",
+    "technical_trace": "Trigger T2 fired: UNCERTAINTY_SPIKE observed=0.75 threshold=0.5. Diagnosis D3: DISENGAGEMENT (0.72). Actions: R4: EASIER_ITEMS({'concept': 'Algebra', 'difficulty_delta': -1, 'n_items': 3}). Post-check: engagement_score=0.62."
+  },
+  "audit": {
+    "scenario_file": "s02_disengagement_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e05",
+      "evidence_event_ids": [
+        "e10",
+        "e10",
+        "e04"
+      ],
+      "diagnosis_event_id": "e06",
+      "recovery_event_ids": [
+        "e07"
+      ],
+      "post_check_event_id": "e11"
+    }
+  }
+}

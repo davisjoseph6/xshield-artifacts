@@ -1,0 +1,1 @@
+The system detected noisy/unstable signals. It ran a short confirmatory check to verify the situation before changing the learning path.
