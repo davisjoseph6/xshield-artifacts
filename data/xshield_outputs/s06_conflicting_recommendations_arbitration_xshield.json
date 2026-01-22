@@ -1,0 +1,88 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s06_ep1",
+  "session_id": "s06",
+  "timestamp_start": "2026-01-15T10:27:35Z",
+  "timestamp_end": "2026-01-15T10:28:25Z",
+  "trigger": {
+    "trigger_type": "CONFLICTING_RECOMMENDATIONS",
+    "threshold": 0.65,
+    "observed_value": 0.78,
+    "trigger_rule_id": "T6"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 1,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e01"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Thermodynamics",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e01"
+    },
+    {
+      "fact": "Monitor signal conflict_score",
+      "value": 0.78,
+      "window": "current_step",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e03"
+    },
+    {
+      "fact": "Conflicting recommendations",
+      "value": 0.78,
+      "window": "episode",
+      "source_event_type": "CONFLICTING_RECOMMENDATIONS",
+      "source_event_id": "e02"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "UNKNOWN",
+    "confidence": 0.55,
+    "diagnosis_rule_id": "D7"
+  },
+  "recovery_action": {
+    "action_type": "CIRCUIT_BREAK",
+    "parameters": {
+      "policy": "majority_vote",
+      "tie_breaker": "orchestrator_default"
+    },
+    "action_rule_id": "R9"
+  },
+  "expected_effect": {
+    "metric": "conflict_score",
+    "target_direction": "DOWN",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "Multiple agents recommended different actions at the same time. The system applied an arbitration rule to choose a safe next step, then will monitor if conflicts reduce.",
+    "technical_trace": "Trigger T6 fired: CONFLICTING_RECOMMENDATIONS observed=0.78 threshold=0.65. Diagnosis D7: UNKNOWN (0.55). Actions: R9: CIRCUIT_BREAK({'policy': 'majority_vote', 'tie_breaker': 'orchestrator_default'}). Post-check: conflict_score=0.1."
+  },
+  "audit": {
+    "scenario_file": "s06_conflicting_recommendations_arbitration_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e04",
+      "evidence_event_ids": [
+        "e01",
+        "e01",
+        "e03",
+        "e02"
+      ],
+      "diagnosis_event_id": "e05",
+      "recovery_event_ids": [
+        "e06"
+      ],
+      "post_check_event_id": "e08"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s07_ep1",
+  "session_id": "s07",
+  "timestamp_start": "2026-01-15T10:33:15Z",
+  "timestamp_end": "2026-01-15T10:34:20Z",
+  "trigger": {
+    "trigger_type": "INCONSISTENCY",
+    "threshold": 0.1,
+    "observed_value": 0.02,
+    "trigger_rule_id": "T7"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 2,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Coding",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e08"
+    },
+    {
+      "fact": "Monitor signal learning_gain_last_10",
+      "value": 0.02,
+      "window": "last_10",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e03"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "DISENGAGEMENT",
+    "confidence": 0.6,
+    "diagnosis_rule_id": "D8"
+  },
+  "recovery_action": {
+    "action_type": "HINT",
+    "parameters": {
+      "hint_level": "step_by_step",
+      "concept": "loop_invariants"
+    },
+    "action_rule_id": "R10"
+  },
+  "expected_effect": {
+    "metric": "learning_gain_last_10",
+    "target_direction": "UP",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "The system detected little learning progress over several steps. It provided a guided hint to help the student unblock, then will re-check progress.",
+    "technical_trace": "Trigger T7 fired: INCONSISTENCY observed=0.02 threshold=0.1. Diagnosis D8: DISENGAGEMENT (0.6). Actions: R10: HINT({'hint_level': 'step_by_step', 'concept': 'loop_invariants'}). Post-check: learning_gain_last_10=0.12."
+  },
+  "audit": {
+    "scenario_file": "s07_stagnation_switch_strategy_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e04",
+      "evidence_event_ids": [
+        "e08",
+        "e08",
+        "e03"
+      ],
+      "diagnosis_event_id": "e05",
+      "recovery_event_ids": [
+        "e06"
+      ],
+      "post_check_event_id": "e09"
+    }
+  }
+}

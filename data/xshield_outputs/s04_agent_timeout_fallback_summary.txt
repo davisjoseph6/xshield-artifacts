@@ -1,0 +1,1 @@
+A support agent did not respond in time, so the system switched to a backup agent to keep the session running. It will monitor whether timeouts stop after the switch.

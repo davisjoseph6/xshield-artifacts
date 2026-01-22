@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s08_ep1",
+  "session_id": "s08",
+  "timestamp_start": "2026-01-15T10:37:35Z",
+  "timestamp_end": "2026-01-15T10:38:40Z",
+  "trigger": {
+    "trigger_type": "UNCERTAINTY_SPIKE",
+    "threshold": 0.6,
+    "observed_value": 0.82,
+    "trigger_rule_id": "T8"
+  },
+  "evidence": [
+    {
+      "fact": "Wrong answers in last 5 items",
+      "value": 0,
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e07"
+    },
+    {
+      "fact": "Most frequent error concept in last 5 items",
+      "value": "Statistics",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_id": "e07"
+    },
+    {
+      "fact": "Monitor signal data_noise_score",
+      "value": 0.82,
+      "window": "unknown",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_id": "e02"
+    }
+  ],
+  "diagnosis": {
+    "hypothesis": "DATA_QUALITY",
+    "confidence": 0.68,
+    "diagnosis_rule_id": "D9"
+  },
+  "recovery_action": {
+    "action_type": "DIAGNOSTIC_ITEM",
+    "parameters": {
+      "purpose": "confirm_noise",
+      "n_items": 1,
+      "concept": "Sanity-check question"
+    },
+    "action_rule_id": "R11"
+  },
+  "expected_effect": {
+    "metric": "data_noise_score",
+    "target_direction": "DOWN",
+    "check_after_steps": 1
+  },
+  "explanation": {
+    "teacher_summary": "The system detected noisy/unstable signals. It ran a short confirmatory check to verify the situation before changing the learning path.",
+    "technical_trace": "Trigger T8 fired: UNCERTAINTY_SPIKE observed=0.82 threshold=0.6. Diagnosis D9: DATA_QUALITY (0.68). Actions: R11: DIAGNOSTIC_ITEM({'purpose': 'confirm_noise', 'n_items': 1, 'concept': 'Sanity-check question'}). Post-check: data_noise_score=0.4."
+  },
+  "audit": {
+    "scenario_file": "s08_noise_burst_confirmatory_check_events.jsonl",
+    "agents_involved": [
+      "diagnose_agent",
+      "monitor_agent",
+      "orchestrator",
+      "recovery_agent"
+    ],
+    "source_event_ids": {
+      "trigger_event_id": "e03",
+      "evidence_event_ids": [
+        "e07",
+        "e07",
+        "e02"
+      ],
+      "diagnosis_event_id": "e04",
+      "recovery_event_ids": [
+        "e05"
+      ],
+      "post_check_event_id": "e08"
+    }
+  }
+}
