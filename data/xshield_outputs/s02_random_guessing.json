@@ -1,8 +1,0 @@
-{
-  "trigger":"RANDOM_GUESSING",
-  "evidence":["Random answers detected", "Confidence fluctuated widely"],
-  "diagnosis":"GUESSING",
-  "recovery_action":"EASIER_ITEMS",
-  "expected_effect":"Increase correct answers in next 3 questions",
-  "teacher_summary":"The system noticed random guessing behavior and presented easier items to the student."
-}

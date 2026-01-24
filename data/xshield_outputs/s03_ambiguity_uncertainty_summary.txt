@@ -1,1 +1,1 @@
-The system detected high uncertainty on Triangle similarity. It asked a short diagnostic question to clarify what the student knows, then will adjust the next steps.
+The system detected high uncertainty on Geometry. It asked a short diagnostic question to clarify what the student knows, then will adjust the next steps.

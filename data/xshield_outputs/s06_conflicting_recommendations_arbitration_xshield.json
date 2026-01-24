@@ -16,28 +16,36 @@
       "value": 1,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e01"
+      "source_event_ids": [
+        "e01"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Thermodynamics",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e01"
+      "source_event_ids": [
+        "e01"
+      ]
     },
     {
       "fact": "Monitor signal conflict_score",
       "value": 0.78,
       "window": "current_step",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e03"
+      "source_event_ids": [
+        "e03"
+      ]
     },
     {
       "fact": "Conflicting recommendations",
       "value": 0.78,
       "window": "episode",
       "source_event_type": "CONFLICTING_RECOMMENDATIONS",
-      "source_event_id": "e02"
+      "source_event_ids": [
+        "e02"
+      ]
     }
   ],
   "diagnosis": {
@@ -63,26 +71,40 @@
     "technical_trace": "Trigger T6 fired: CONFLICTING_RECOMMENDATIONS observed=0.78 threshold=0.65. Diagnosis D7: UNKNOWN (0.55). Actions: R9: CIRCUIT_BREAK({'policy': 'majority_vote', 'tie_breaker': 'orchestrator_default'}). Post-check: conflict_score=0.1."
   },
   "audit": {
-    "scenario_file": "s06_conflicting_recommendations_arbitration_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e04",
-      "evidence_event_ids": [
-        "e01",
-        "e01",
-        "e03",
-        "e02"
-      ],
-      "diagnosis_event_id": "e05",
-      "recovery_event_ids": [
-        "e06"
-      ],
-      "post_check_event_id": "e08"
-    }
+    "source_event_range": {
+      "first_event_id": "e04",
+      "last_event_id": "e08"
+    },
+    "hashes": {
+      "log_sha256": "94fc3b88fdd709d7a3e5080703441acaef7146a7881982b0b0a208e32270d0a5",
+      "explanation_sha256": "d2321c16fd1d9ba0077c03cb1068d7b4ef8450a44ec523a0d76bfeac14a07677"
+    },
+    "notes": "scenario_file=s06_conflicting_recommendations_arbitration_events.jsonl"
   }
 }

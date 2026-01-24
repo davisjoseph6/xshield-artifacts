@@ -16,28 +16,36 @@
       "value": 0,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e01"
+      "source_event_ids": [
+        "e01"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Physics",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e01"
+      "source_event_ids": [
+        "e01"
+      ]
     },
     {
       "fact": "Monitor signal invalid_output_rate_last_20",
       "value": 0.15,
       "window": "last_20",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e03"
+      "source_event_ids": [
+        "e03"
+      ]
     },
     {
       "fact": "Invalid output detected",
       "value": "missing_required_field:choices",
       "window": "episode",
       "source_event_type": "OUTPUT_INVALID",
-      "source_event_id": "e02"
+      "source_event_ids": [
+        "e02"
+      ]
     }
   ],
   "diagnosis": {
@@ -56,34 +64,47 @@
   "expected_effect": {
     "metric": "invalid_output_rate_last_20",
     "target_direction": "DOWN",
-    "check_after_steps": 2
+    "check_after_steps": 1
   },
   "explanation": {
     "teacher_summary": "The system detected invalid generated content. It first retried, then switched to a safer degraded mode to keep the session consistent while reducing the risk of further invalid outputs.",
     "technical_trace": "Trigger T5 fired: OUTPUT_INVALID observed=0.15 threshold=0.05. Diagnosis D6: DATA_QUALITY (0.63). Actions: R7: RETRY({'agent': 'question_generator_agent', 'max_retries': 1}) -> R8: DEGRADED_MODE({'mode': 'template_questions', 'reason': 'generator_unreliable'}). Post-check: invalid_output_rate_last_20=0.02."
   },
   "audit": {
-    "scenario_file": "s05_invalid_output_data_quality_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e04",
-      "evidence_event_ids": [
-        "e01",
-        "e01",
-        "e03",
-        "e02"
-      ],
-      "diagnosis_event_id": "e05",
-      "recovery_event_ids": [
-        "e06",
-        "e08"
-      ],
-      "post_check_event_id": "e10"
-    }
+    "source_event_range": {
+      "first_event_id": "e04",
+      "last_event_id": "e10"
+    },
+    "hashes": {
+      "log_sha256": "87cba5bbaf596ce93d2f110817454c025643b358448e25ad73971b672e799b83",
+      "explanation_sha256": "02765354ac099ad4991de115cbaaf8e371e72bc8f4e98fbc77261bc69f2fc5c6"
+    },
+    "notes": "scenario_file=s05_invalid_output_data_quality_events.jsonl"
   }
 }

@@ -16,28 +16,36 @@
       "value": 0,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Programming",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Monitor signal agent_timeout_rate_last_10",
       "value": 0.2,
       "window": "last_10",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e03"
+      "source_event_ids": [
+        "e03"
+      ]
     },
     {
       "fact": "Agent timeout",
       "value": "feedback_agent (2000ms)",
       "window": "episode",
       "source_event_type": "AGENT_TIMEOUT",
-      "source_event_id": "e02"
+      "source_event_ids": [
+        "e02"
+      ]
     }
   ],
   "diagnosis": {
@@ -63,26 +71,40 @@
     "technical_trace": "Trigger T4 fired: AGENT_TIMEOUT observed=0.2 threshold=0.1. Diagnosis D5: SYSTEM_FAULT (0.74). Actions: R6: FALLBACK_AGENT({'from_agent': 'feedback_agent', 'to_agent': 'simple_feedback_agent'}). Post-check: agent_timeout_rate_last_10=0.0."
   },
   "audit": {
-    "scenario_file": "s04_agent_timeout_fallback_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e04",
-      "evidence_event_ids": [
-        "e08",
-        "e08",
-        "e03",
-        "e02"
-      ],
-      "diagnosis_event_id": "e05",
-      "recovery_event_ids": [
-        "e06"
-      ],
-      "post_check_event_id": "e09"
-    }
+    "source_event_range": {
+      "first_event_id": "e04",
+      "last_event_id": "e09"
+    },
+    "hashes": {
+      "log_sha256": "e97714c4a8896a454b7240ae036c182a1c7835be47313d43f80b85888f1a6023",
+      "explanation_sha256": "8c6d348cc6a3d4da0dbbb618161d29bbb5bb4526ae66a374238de42fec63aa3b"
+    },
+    "notes": "scenario_file=s04_agent_timeout_fallback_events.jsonl"
   }
 }

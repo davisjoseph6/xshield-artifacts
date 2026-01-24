@@ -16,21 +16,27 @@
       "value": 2,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Coding",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Monitor signal learning_gain_last_10",
       "value": 0.02,
       "window": "last_10",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e03"
+      "source_event_ids": [
+        "e03"
+      ]
     }
   ],
   "diagnosis": {
@@ -56,25 +62,40 @@
     "technical_trace": "Trigger T7 fired: INCONSISTENCY observed=0.02 threshold=0.1. Diagnosis D8: DISENGAGEMENT (0.6). Actions: R10: HINT({'hint_level': 'step_by_step', 'concept': 'loop_invariants'}). Post-check: learning_gain_last_10=0.12."
   },
   "audit": {
-    "scenario_file": "s07_stagnation_switch_strategy_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e04",
-      "evidence_event_ids": [
-        "e08",
-        "e08",
-        "e03"
-      ],
-      "diagnosis_event_id": "e05",
-      "recovery_event_ids": [
-        "e06"
-      ],
-      "post_check_event_id": "e09"
-    }
+    "source_event_range": {
+      "first_event_id": "e04",
+      "last_event_id": "e09"
+    },
+    "hashes": {
+      "log_sha256": "71131d6728125dbd684e0d3792abbec2e659a55650e97132742de52964367f17",
+      "explanation_sha256": "ca79f07f20d18088f05e786f32a4559670f4b92ba6cddbf3e0097464b230d8c7"
+    },
+    "notes": "scenario_file=s07_stagnation_switch_strategy_events.jsonl"
   }
 }

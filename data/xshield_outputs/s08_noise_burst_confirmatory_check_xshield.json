@@ -16,21 +16,27 @@
       "value": 0,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e07"
+      "source_event_ids": [
+        "e07"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Statistics",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e07"
+      "source_event_ids": [
+        "e07"
+      ]
     },
     {
       "fact": "Monitor signal data_noise_score",
       "value": 0.82,
-      "window": "unknown",
+      "window": "episode",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e02"
+      "source_event_ids": [
+        "e02"
+      ]
     }
   ],
   "diagnosis": {
@@ -57,25 +63,40 @@
     "technical_trace": "Trigger T8 fired: UNCERTAINTY_SPIKE observed=0.82 threshold=0.6. Diagnosis D9: DATA_QUALITY (0.68). Actions: R11: DIAGNOSTIC_ITEM({'purpose': 'confirm_noise', 'n_items': 1, 'concept': 'Sanity-check question'}). Post-check: data_noise_score=0.4."
   },
   "audit": {
-    "scenario_file": "s08_noise_burst_confirmatory_check_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e03",
-      "evidence_event_ids": [
-        "e07",
-        "e07",
-        "e02"
-      ],
-      "diagnosis_event_id": "e04",
-      "recovery_event_ids": [
-        "e05"
-      ],
-      "post_check_event_id": "e08"
-    }
+    "source_event_range": {
+      "first_event_id": "e03",
+      "last_event_id": "e08"
+    },
+    "hashes": {
+      "log_sha256": "2d8560ac2c93ede3de4d721b967bd71289ccd26ae896fff496737a91e0104d56",
+      "explanation_sha256": "0ac074e22b10ccb4defaa0bb792a85439a8da63bd4b008b5683da7645d601c9d"
+    },
+    "notes": "scenario_file=s08_noise_burst_confirmatory_check_events.jsonl"
   }
 }

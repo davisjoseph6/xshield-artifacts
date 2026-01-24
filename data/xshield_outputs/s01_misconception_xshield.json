@@ -16,21 +16,27 @@
       "value": 2,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e10"
+      "source_event_ids": [
+        "e10"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Fractions",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e10"
+      "source_event_ids": [
+        "e10"
+      ]
     },
     {
       "fact": "Monitor signal error_rate_last_5",
       "value": 0.8,
       "window": "last_5",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e04"
+      "source_event_ids": [
+        "e04"
+      ]
     }
   ],
   "diagnosis": {
@@ -52,29 +58,44 @@
     "check_after_steps": 2
   },
   "explanation": {
-    "teacher_summary": "The system detected repeated errors on Common denominators (above the allowed threshold). It switched to a short prerequisite check on Common denominators for 2 question(s), then will reassess performance.",
+    "teacher_summary": "The system detected repeated errors on Fractions (above the allowed threshold). It switched to a short prerequisite check on Common denominators for 2 question(s), then will reassess performance.",
     "technical_trace": "Trigger T1 fired: REPEATED_FAILURE observed=0.8 threshold=0.6. Diagnosis D2: MISCONCEPTION (0.7). Actions: R3: PREREQUISITE_STEP({'concept': 'Common denominators', 'n_items': 2}). Post-check: error_rate_last_5=0.4."
   },
   "audit": {
-    "scenario_file": "s01_misconception_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e05",
-      "evidence_event_ids": [
-        "e10",
-        "e10",
-        "e04"
-      ],
-      "diagnosis_event_id": "e06",
-      "recovery_event_ids": [
-        "e07"
-      ],
-      "post_check_event_id": "e11"
-    }
+    "source_event_range": {
+      "first_event_id": "e05",
+      "last_event_id": "e11"
+    },
+    "hashes": {
+      "log_sha256": "0dfa59a1e0d6c2df318171076cc878c7d890cdadd40dad22acadc32799160b9a",
+      "explanation_sha256": "f3ef33718bd72b42d70bc58fb267e8686d44f50b83d5b89e44f7d32cc70363ca"
+    },
+    "notes": "scenario_file=s01_misconception_events.jsonl"
   }
 }

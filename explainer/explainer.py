@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Auto-Explainer: scenario logs -> X-SHIELD explanations.
+"""Auto-Explainer: scenario logs -> X-SHIELD explanations (schema-compliant).
 
 Reads JSONL scenario event logs and generates:
 - `*_xshield.json`: a structured explanation object (X-SHIELD schema, v0.1)
@@ -12,10 +12,11 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from templates import render_teacher_summary
 
@@ -23,9 +24,18 @@ from templates import render_teacher_summary
 @dataclass(frozen=True)
 class EpisodeSlice:
     """A contiguous slice of events representing one self-healing episode."""
-
     start_idx: int
     end_idx: int  # inclusive
+
+
+ROLE_MAP: Dict[str, str] = {
+    "monitor_agent": "monitoring",
+    "diagnose_agent": "diagnosis",
+    "recovery_agent": "recovery",
+    "feedback_agent": "feedback",
+    "question_generator_agent": "generation",
+    "orchestrator": "orchestration",
+}
 
 
 def read_jsonl(path: Path) -> List[Dict[str, Any]]:
@@ -39,11 +49,7 @@ def read_jsonl(path: Path) -> List[Dict[str, Any]]:
     return events
 
 
-def find_last_before(
-    events: List[Dict[str, Any]],
-    end_idx: int,
-    event_type: str,
-) -> Optional[Dict[str, Any]]:
+def find_last_before(events: List[Dict[str, Any]], end_idx: int, event_type: str) -> Optional[Dict[str, Any]]:
     """Return last event of type `event_type` at or before `end_idx`."""
     for i in range(end_idx, -1, -1):
         if events[i].get("event_type") == event_type:
@@ -62,11 +68,11 @@ def slice_episodes(events: List[Dict[str, Any]]) -> List[EpisodeSlice]:
 
         start = i
         end = i
-        # end at first POST_CHECK after trigger
         for j in range(i, len(events)):
             end = j
             if events[j].get("event_type") == "POST_CHECK":
                 break
+
         slices.append(EpisodeSlice(start_idx=start, end_idx=end))
         i = end + 1
     return slices
@@ -74,61 +80,78 @@ def slice_episodes(events: List[Dict[str, Any]]) -> List[EpisodeSlice]:
 
 def infer_target_direction(metric: str) -> str:
     """Heuristic: infer whether metric should go UP or DOWN."""
-    m = metric.lower()
+    m = (metric or "").lower()
     down_markers = ("error", "uncertainty", "timeout", "latency", "invalid", "conflict", "noise", "rate")
     if any(k in m for k in down_markers):
         return "DOWN"
     return "UP"
 
 
-def extract_context(events: List[Dict[str, Any]], episode_events: List[Dict[str, Any]]) -> Dict[str, Any]:
+def compute_check_after_steps(recovery_selected: List[Dict[str, Any]]) -> int:
+    """Compute check_after_steps from the most recent recovery params that specify pacing."""
+    # Look from the last selected action backwards, until we find n_items or max_retries.
+    for ev in reversed(recovery_selected):
+        params = ev.get("payload", {}).get("parameters", {})
+        if isinstance(params, dict):
+            if isinstance(params.get("n_items"), int):
+                return max(1, params["n_items"])
+            if isinstance(params.get("max_retries"), int):
+                return max(1, params["max_retries"])
+    return 2
+
+
+def extract_context(events: List[Dict[str, Any]], slice_: EpisodeSlice, episode_events: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Extract lightweight context for templating (concepts, counts)."""
     context: Dict[str, Any] = {}
 
-    # Primary concept: last concept seen in answers within episode, else fallback to "current topic".
-    for ev in reversed(episode_events):
+    # Prefer the last concept BEFORE the trigger (more faithful to what caused healing).
+    for ev in reversed(events[: slice_.start_idx]):
         if ev.get("event_type") == "ANSWER_RECORDED":
             concept = ev.get("payload", {}).get("concept")
             if concept:
                 context["concept"] = concept
                 break
 
-    # If a prerequisite step was selected, store prereq concept and n_items.
+    # Fallback: last concept within episode
+    if "concept" not in context:
+        for ev in reversed(episode_events):
+            if ev.get("event_type") == "ANSWER_RECORDED":
+                concept = ev.get("payload", {}).get("concept")
+                if concept:
+                    context["concept"] = concept
+                    break
+
+    # Pull action params for templates
     for ev in episode_events:
         if ev.get("event_type") == "RECOVERY_SELECTED":
             payload = ev.get("payload", {})
+            params = payload.get("parameters", {}) if isinstance(payload.get("parameters", {}), dict) else {}
+
             if payload.get("action_type") == "PREREQUISITE_STEP":
-                params = payload.get("parameters", {})
                 if "concept" in params:
                     context["prereq_concept"] = params["concept"]
                 if "n_items" in params:
                     context["n_items"] = params["n_items"]
 
             if payload.get("action_type") == "EASIER_ITEMS":
-                params = payload.get("parameters", {})
+                if "n_items" in params:
+                    context["n_items"] = params["n_items"]
+
+            if payload.get("action_type") == "DIAGNOSTIC_ITEM":
                 if "n_items" in params:
                     context["n_items"] = params["n_items"]
 
     return context
 
 
-def select_evidence(episode_events: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Select 3–5 evidence facts and return (evidence_list, evidence_event_ids).
-
-    Evidence rules (simple, deterministic):
-    - Include at most 2 monitor signals closest to the trigger.
-    - Include at most 2 answer-derived facts (recent incorrect count, repeated concept).
-    - Include at most 2 fault events (timeouts/invalid/conflicts).
-    """
+def select_evidence(episode_events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Select 3–5 evidence facts (schema-compliant evidence items)."""
     evidence: List[Dict[str, Any]] = []
-    evidence_ids: List[str] = []
 
-    # Collect candidates
     answers = [e for e in episode_events if e.get("event_type") == "ANSWER_RECORDED"]
     signals = [e for e in episode_events if e.get("event_type") == "MONITOR_SIGNAL"]
     faults = [e for e in episode_events if e.get("event_type") in ("AGENT_TIMEOUT", "OUTPUT_INVALID", "CONFLICTING_RECOMMENDATIONS")]
 
-    # Answer-derived facts
     if answers:
         last5 = answers[-5:]
         wrong = sum(1 for a in last5 if not a.get("payload", {}).get("correct", False))
@@ -137,61 +160,55 @@ def select_evidence(episode_events: List[Dict[str, Any]]) -> Tuple[List[Dict[str
             c = a.get("payload", {}).get("concept", "unknown")
             concept_counts[c] = concept_counts.get(c, 0) + (0 if a.get("payload", {}).get("correct", False) else 1)
         top_concept = max(concept_counts.items(), key=lambda kv: kv[1])[0]
+
         evidence.append({
             "fact": "Wrong answers in last 5 items",
             "value": wrong,
             "window": "last_5",
             "source_event_type": "ANSWER_RECORDED",
-            "source_event_id": last5[-1].get("event_id"),
+            "source_event_ids": [last5[-1].get("event_id", "unknown")],
         })
-        evidence_ids.append(last5[-1].get("event_id"))
         evidence.append({
             "fact": "Most frequent error concept in last 5 items",
             "value": top_concept,
             "window": "last_5",
             "source_event_type": "ANSWER_RECORDED",
-            "source_event_id": last5[-1].get("event_id"),
+            "source_event_ids": [last5[-1].get("event_id", "unknown")],
         })
-        evidence_ids.append(last5[-1].get("event_id"))
 
-    # Monitor signals (closest to trigger)
     for sig in signals[-2:]:
         payload = sig.get("payload", {})
         evidence.append({
             "fact": f"Monitor signal {payload.get('signal_name', 'unknown')}",
             "value": payload.get("value"),
-            "window": payload.get("details", {}).get("window", "unknown"),
+            "window": payload.get("details", {}).get("window", "episode"),
             "source_event_type": "MONITOR_SIGNAL",
-            "source_event_id": sig.get("event_id"),
+            "source_event_ids": [sig.get("event_id", "unknown")],
         })
-        evidence_ids.append(sig.get("event_id"))
 
-    # Fault events
     for fev in faults[-2:]:
         payload = fev.get("payload", {})
         if fev.get("event_type") == "AGENT_TIMEOUT":
             fact = "Agent timeout"
-            val = f"{payload.get('agent_name')} ({payload.get('timeout_ms')}ms)"
+            val = f"{payload.get('agent_name', 'unknown')} ({payload.get('timeout_ms', 'unknown')}ms)"
         elif fev.get("event_type") == "OUTPUT_INVALID":
             fact = "Invalid output detected"
             val = payload.get("reason", "unknown")
         else:
             fact = "Conflicting recommendations"
             val = payload.get("conflict_score", "unknown")
+
         evidence.append({
             "fact": fact,
             "value": val,
             "window": "episode",
             "source_event_type": fev.get("event_type"),
-            "source_event_id": fev.get("event_id"),
+            "source_event_ids": [fev.get("event_id", "unknown")],
         })
-        evidence_ids.append(fev.get("event_id"))
 
-    # Keep 3–5 facts max, prefer earlier-added order (answer facts -> signals -> faults)
     evidence = evidence[:5]
-    evidence_ids = evidence_ids[:5]
 
-    # Ensure we have at least 3 (if answers missing)
+    # Ensure at least 3
     if len(evidence) < 3:
         for ev in episode_events:
             if ev.get("event_type") in ("TRIGGER_DETECTED", "DIAGNOSIS_SELECTED", "RECOVERY_SELECTED"):
@@ -200,32 +217,35 @@ def select_evidence(episode_events: List[Dict[str, Any]]) -> Tuple[List[Dict[str
                     "value": ev.get("payload", {}),
                     "window": "episode",
                     "source_event_type": ev.get("event_type"),
-                    "source_event_id": ev.get("event_id"),
+                    "source_event_ids": [ev.get("event_id", "unknown")],
                 })
-                evidence_ids.append(ev.get("event_id"))
             if len(evidence) >= 3:
                 break
 
-    return evidence[:5], evidence_ids[:5]
+    return evidence[:5]
 
 
-def build_xshield(
-    scenario_path: Path,
-    events: List[Dict[str, Any]],
-    slice_: EpisodeSlice,
-    episode_idx: int,
-) -> Dict[str, Any]:
-    """Build a single X-SHIELD explanation object for one episode."""
-    episode_events = events[slice_.start_idx : slice_.end_idx + 1]
+def sha256_text(s: str) -> str:
+    """Return SHA256 hex digest for a string."""
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: EpisodeSlice, episode_idx: int) -> Dict[str, Any]:
+    """Build a single X-SHIELD explanation object for one episode (schema compliant)."""
+    episode_events = events[slice_.start_idx: slice_.end_idx + 1]
     session_id = episode_events[0].get("session_id", "unknown")
     episode_id = f"{session_id}_ep{episode_idx}"
 
     trigger_ev = episode_events[0]
     trigger_payload = trigger_ev.get("payload", {})
-    trigger_type = trigger_payload.get("trigger_type", "UNKNOWN")
-    trigger_rule_id = trigger_payload.get("rule_id", "T?")
 
-    # Attach the closest monitor signal (if any) for observed value / threshold.
+    trigger_type = trigger_payload.get("trigger_type")
+    trigger_rule_id = trigger_payload.get("rule_id")
+    if not trigger_type:
+        trigger_type = "REPEATED_FAILURE"
+    if not trigger_rule_id:
+        trigger_rule_id = "T0"
+
     last_signal = find_last_before(events, slice_.start_idx, "MONITOR_SIGNAL")
     if last_signal is not None:
         sig_payload = last_signal.get("payload", {})
@@ -237,47 +257,41 @@ def build_xshield(
 
     diagnosis_ev = next((e for e in episode_events if e.get("event_type") == "DIAGNOSIS_SELECTED"), None)
     diagnosis_payload = (diagnosis_ev or {}).get("payload", {})
-    hypothesis = diagnosis_payload.get("hypothesis", "UNKNOWN")
-    diag_conf = diagnosis_payload.get("confidence", None)
-    diagnosis_rule_id = diagnosis_payload.get("rule_id", "D?")
+    hypothesis = diagnosis_payload.get("hypothesis") or "UNKNOWN"
+    diagnosis_rule_id = diagnosis_payload.get("rule_id") or "D0"
+    diag_conf_raw = diagnosis_payload.get("confidence")
+    diag_conf = float(diag_conf_raw) if isinstance(diag_conf_raw, (int, float)) else 0.5
 
-    # One episode may have multiple recovery selections; choose the last before POST_CHECK.
     recovery_selected = [e for e in episode_events if e.get("event_type") == "RECOVERY_SELECTED"]
-    if recovery_selected:
-        action_ev = recovery_selected[-1]
-    else:
-        action_ev = None
+    action_ev = recovery_selected[-1] if recovery_selected else None
     action_payload = (action_ev or {}).get("payload", {})
-    action_type = action_payload.get("action_type", "UNKNOWN")
+
+    action_type = action_payload.get("action_type") or "RETRY"
     action_params = action_payload.get("parameters", {})
-    action_rule_id = action_payload.get("rule_id", "R?")
+    if not isinstance(action_params, dict):
+        action_params = {}
+    action_rule_id = action_payload.get("rule_id") or "R0"
 
     post_check_ev = next((e for e in reversed(episode_events) if e.get("event_type") == "POST_CHECK"), None)
     post_payload = (post_check_ev or {}).get("payload", {})
     metric = post_payload.get("metric", "unknown_metric")
-    check_after_steps = 2
-    if isinstance(action_params, dict):
-        if "n_items" in action_params and isinstance(action_params["n_items"], int):
-            check_after_steps = action_params["n_items"]
-        elif "max_retries" in action_params and isinstance(action_params["max_retries"], int):
-            check_after_steps = max(1, action_params["max_retries"])
 
-    # Include a small context window BEFORE the trigger to make evidence match the trigger.
+    check_after_steps = compute_check_after_steps(recovery_selected)
+
+    # Evidence: include small context before trigger so evidence matches cause
     context_start = max(0, slice_.start_idx - 5)
-    context_events = events[context_start : slice_.end_idx + 1]
+    context_events = events[context_start: slice_.end_idx + 1]
+    evidence = select_evidence(context_events)
 
-    evidence, evidence_event_ids = select_evidence(context_events)
-
-    context = extract_context(events, episode_events)
+    context = extract_context(events, slice_, episode_events)
     context["check_after_steps"] = check_after_steps
 
     teacher_summary = render_teacher_summary(trigger_type, hypothesis, action_type, context)
 
-    # Technical trace includes action sequence if multiple recovery selections were attempted.
     actions_trace = []
     for r in recovery_selected:
         rp = r.get("payload", {})
-        actions_trace.append(f"{rp.get('rule_id','R?')}: {rp.get('action_type')}({rp.get('parameters', {})})")
+        actions_trace.append(f"{rp.get('rule_id', 'R0')}: {rp.get('action_type')}({rp.get('parameters', {})})")
     actions_str = " -> ".join(actions_trace) if actions_trace else f"{action_rule_id}: {action_type}({action_params})"
 
     technical_trace = (
@@ -285,6 +299,26 @@ def build_xshield(
         f"Diagnosis {diagnosis_rule_id}: {hypothesis} ({diag_conf}). "
         f"Actions: {actions_str}. "
         f"Post-check: {metric}={post_payload.get('value')}."
+    )
+
+    # Schema-compliant audit
+    agents = sorted({e.get("agent", "unknown") for e in episode_events})
+    agents_involved = []
+    for a in agents:
+        agents_involved.append({
+            "agent_name": a,
+            "agent_role": ROLE_MAP.get(a, "unknown"),
+            "agent_version": None,
+        })
+
+    first_event_id = trigger_ev.get("event_id", "unknown")
+    last_event_id = (post_check_ev or episode_events[-1]).get("event_id", "unknown")
+
+    log_slice_text = json.dumps(context_events, ensure_ascii=False, sort_keys=True)
+    explanation_text = json.dumps(
+        {"teacher_summary": teacher_summary, "technical_trace": technical_trace},
+        ensure_ascii=False,
+        sort_keys=True,
     )
 
     xshield: Dict[str, Any] = {
@@ -320,15 +354,11 @@ def build_xshield(
             "technical_trace": technical_trace,
         },
         "audit": {
-            "scenario_file": scenario_path.name,
-            "agents_involved": sorted({e.get("agent", "unknown") for e in episode_events}),
-            "source_event_ids": {
-                "trigger_event_id": trigger_ev.get("event_id"),
-                "evidence_event_ids": evidence_event_ids,
-                "diagnosis_event_id": (diagnosis_ev or {}).get("event_id"),
-                "recovery_event_ids": [e.get("event_id") for e in recovery_selected],
-                "post_check_event_id": (post_check_ev or {}).get("event_id"),
-            },
+            "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
+            "agents_involved": agents_involved,
+            "source_event_range": {"first_event_id": first_event_id, "last_event_id": last_event_id},
+            "hashes": {"log_sha256": sha256_text(log_slice_text), "explanation_sha256": sha256_text(explanation_text)},
+            "notes": f"scenario_file={scenario_path.name}",
         },
     }
     return xshield
@@ -363,7 +393,6 @@ def main() -> int:
         episodes = slice_episodes(events)
         if not episodes:
             continue
-        # For now, one output per scenario: take first episode (scenarios are designed to have one).
         xshield = build_xshield(spath, events, episodes[0], episode_idx=1)
         stem = spath.stem.replace("_events", "")
         write_outputs(out_dir, stem, xshield)
@@ -373,3 +402,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -16,21 +16,27 @@
       "value": 2,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e10"
+      "source_event_ids": [
+        "e10"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Algebra",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e10"
+      "source_event_ids": [
+        "e10"
+      ]
     },
     {
       "fact": "Monitor signal guess_rate_last_5",
       "value": 0.75,
       "window": "last_5",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e04"
+      "source_event_ids": [
+        "e04"
+      ]
     }
   ],
   "diagnosis": {
@@ -57,25 +63,40 @@
     "technical_trace": "Trigger T2 fired: UNCERTAINTY_SPIKE observed=0.75 threshold=0.5. Diagnosis D3: DISENGAGEMENT (0.72). Actions: R4: EASIER_ITEMS({'concept': 'Algebra', 'difficulty_delta': -1, 'n_items': 3}). Post-check: engagement_score=0.62."
   },
   "audit": {
-    "scenario_file": "s02_disengagement_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e05",
-      "evidence_event_ids": [
-        "e10",
-        "e10",
-        "e04"
-      ],
-      "diagnosis_event_id": "e06",
-      "recovery_event_ids": [
-        "e07"
-      ],
-      "post_check_event_id": "e11"
-    }
+    "source_event_range": {
+      "first_event_id": "e05",
+      "last_event_id": "e11"
+    },
+    "hashes": {
+      "log_sha256": "542a8f1b0e5fba4022a97911bad850e71601b1be3763319d3d1bf5630b8b7d2a",
+      "explanation_sha256": "e3236f3c270447c14d8edeba3a3d7f4199bc2c6200849890c074ef3084ca2398"
+    },
+    "notes": "scenario_file=s02_disengagement_events.jsonl"
   }
 }

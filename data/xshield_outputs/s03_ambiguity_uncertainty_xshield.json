@@ -16,21 +16,27 @@
       "value": 1,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Most frequent error concept in last 5 items",
       "value": "Geometry",
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
-      "source_event_id": "e08"
+      "source_event_ids": [
+        "e08"
+      ]
     },
     {
       "fact": "Monitor signal uncertainty_mean_last_3",
       "value": 0.86,
       "window": "last_3",
       "source_event_type": "MONITOR_SIGNAL",
-      "source_event_id": "e03"
+      "source_event_ids": [
+        "e03"
+      ]
     }
   ],
   "diagnosis": {
@@ -53,29 +59,44 @@
     "check_after_steps": 2
   },
   "explanation": {
-    "teacher_summary": "The system detected high uncertainty on Triangle similarity. It asked a short diagnostic question to clarify what the student knows, then will adjust the next steps.",
+    "teacher_summary": "The system detected high uncertainty on Geometry. It asked a short diagnostic question to clarify what the student knows, then will adjust the next steps.",
     "technical_trace": "Trigger T3 fired: UNCERTAINTY_SPIKE observed=0.86 threshold=0.7. Diagnosis D4: AMBIGUITY (0.66). Actions: R5: DIAGNOSTIC_ITEM({'concept': 'Triangle similarity', 'difficulty': 2, 'purpose': 'disambiguate_rule_choice'}). Post-check: uncertainty_mean_last_3=0.55."
   },
   "audit": {
-    "scenario_file": "s03_ambiguity_uncertainty_events.jsonl",
+    "orchestrator": {
+      "name": "SelfHealingOrchestrator",
+      "version": "0.1"
+    },
     "agents_involved": [
-      "diagnose_agent",
-      "monitor_agent",
-      "orchestrator",
-      "recovery_agent"
+      {
+        "agent_name": "diagnose_agent",
+        "agent_role": "diagnosis",
+        "agent_version": null
+      },
+      {
+        "agent_name": "monitor_agent",
+        "agent_role": "monitoring",
+        "agent_version": null
+      },
+      {
+        "agent_name": "orchestrator",
+        "agent_role": "orchestration",
+        "agent_version": null
+      },
+      {
+        "agent_name": "recovery_agent",
+        "agent_role": "recovery",
+        "agent_version": null
+      }
     ],
-    "source_event_ids": {
-      "trigger_event_id": "e04",
-      "evidence_event_ids": [
-        "e08",
-        "e08",
-        "e03"
-      ],
-      "diagnosis_event_id": "e05",
-      "recovery_event_ids": [
-        "e06"
-      ],
-      "post_check_event_id": "e09"
-    }
+    "source_event_range": {
+      "first_event_id": "e04",
+      "last_event_id": "e09"
+    },
+    "hashes": {
+      "log_sha256": "6c33c5c938d39a21e2d954a54ae039fa88021bb4a77b8b33b269d425f660ce74",
+      "explanation_sha256": "c20a90aad93da290dbb056280bc6918cf21b55b34273e35cb7a5c5efaa5fdd99"
+    },
+    "notes": "scenario_file=s03_ambiguity_uncertainty_events.jsonl"
   }
 }
