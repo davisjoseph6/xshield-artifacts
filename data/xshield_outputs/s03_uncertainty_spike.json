@@ -1,0 +1,12 @@
+{
+  "trigger": "UNCERTAINTY_SPIKE",
+  "evidence": [
+    "Confidence dropped sharply from 0.8 to 0.4",
+    "Multiple incorrect answers on the same topic",
+    "Student hesitated for longer times per question"
+  ],
+  "diagnosis": "AMBIGUITY",
+  "recovery_action": "DIAGNOSTIC_ITEM",
+  "expected_effect": "Clarify misunderstanding in the next item",
+  "teacher_summary": "The system noticed high uncertainty. It added a diagnostic question to clarify the student's understanding."
+}

@@ -1,0 +1,12 @@
+{
+  "trigger": "AGENT_TIMEOUT",
+  "evidence": [
+    "Feedback agent did not respond in time",
+    "Action not executed within 2 seconds",
+    "Timeout repeated 2 times"
+  ],
+  "diagnosis": "SYSTEM_FAULT",
+  "recovery_action": "FALLBACK_AGENT",
+  "expected_effect": "Continue session using alternate agent",
+  "teacher_summary": "The system detected an agent timeout. It switched to a fallback agent to continue the session without disruption."
+}
