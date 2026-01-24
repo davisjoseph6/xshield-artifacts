@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-__pycache__/
-.env
-.streamlit/
-.ipynb_checkpoints/
-=======
 # Python
 __pycache__/
 *.py[cod]
@@ -18,6 +12,13 @@ build/
 .venv/
 venv/
 
+# Jupyter / Streamlit
+.ipynb_checkpoints/
+.streamlit/
+
+# Env files
+.env
+
 # OS
 .DS_Store
->>>>>>> c3051b61fb6290908a89979b43f1b2e7a5047fb2
+
