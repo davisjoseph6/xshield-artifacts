@@ -1,0 +1,39 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s04_ep1",
+  "session_id": "s04",
+  "timestamp_start": "2026-01-22T10:20:08Z",
+  "timestamp_end": "2026-01-22T10:20:30Z",
+  "trigger": {
+    "trigger_type": "OUTPUT_INVALID",
+    "trigger_rule_id": "T6"
+  },
+  "evidence": [
+    {"fact": "Invalid JSON output", "value": "missing field", "window": "t-2s..t", "source_event_type": "OUTPUT_VALIDATION_FAILED"}
+  ],
+  "diagnosis": {
+    "hypothesis": "DATA_QUALITY",
+    "confidence": 0.7,
+    "diagnosis_rule_id": "D7"
+  },
+  "recovery_action": {
+    "action_type": "RETRY",
+    "parameters": {"agent": "ItemSelectionAgent", "max_retries": 1},
+    "action_rule_id": "R7"
+  },
+  "expected_effect": {
+    "metric": "output_validation_pass_rate",
+    "target_direction": "UP",
+    "check_after_steps": 1
+  },
+  "explanation": {
+    "teacher_summary": "The system detected an invalid output and retried with cleaned data. If it fails again, it will switch to degraded mode.",
+    "technical_trace": "Trigger T6 fired. Diagnosis D7: DATA_QUALITY. Action R7: RETRY then DEGRADED_MODE."
+  },
+  "audit": {
+    "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
+    "agents_involved": [{"agent_name": "RecoveryAgent", "agent_role": "recovery"}],
+    "source_event_range": {"first_event_id": "e66", "last_event_id": "e71"},
+    "hashes": {"log_sha256": "eee555", "explanation_sha256": "fff666"}
+  }
+}

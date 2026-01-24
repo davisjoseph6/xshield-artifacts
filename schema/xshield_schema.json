@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/xshield_schema.json",
+  "title": "X-SHIELD Explanation Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "episode_id",
+    "session_id",
+    "timestamp_start",
+    "timestamp_end",
+    "trigger",
+    "evidence",
+    "diagnosis",
+    "recovery_action",
+    "expected_effect",
+    "explanation",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Version string for the X-SHIELD schema.",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+      "examples": ["0.1"]
+    },
+
+    "episode_id": {
+      "type": "string",
+      "description": "Unique self-healing episode identifier within the dataset.",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "examples": ["s04_ep1"]
+    },
+
+    "session_id": {
+      "type": "string",
+      "description": "Scenario/session identifier (e.g., s01..s12).",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "examples": ["s04"]
+    },
+
+    "timestamp_start": {
+      "type": "string",
+      "description": "ISO-8601 timestamp when self-healing episode starts.",
+      "format": "date-time",
+      "examples": ["2026-01-22T10:00:12Z"]
+    },
+
+    "timestamp_end": {
+      "type": "string",
+      "description": "ISO-8601 timestamp when episode ends (action selected and applied).",
+      "format": "date-time",
+      "examples": ["2026-01-22T10:00:20Z"]
+    },
+
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger_type", "trigger_rule_id"],
+      "properties": {
+        "trigger_type": {
+          "type": "string",
+          "description": "Why self-healing was initiated.",
+          "enum": [
+            "REPEATED_FAILURE",
+            "UNCERTAINTY_SPIKE",
+            "INCONSISTENCY",
+            "AGENT_TIMEOUT",
+            "OUTPUT_INVALID",
+            "CONFLICTING_RECOMMENDATIONS"
+          ]
+        },
+        "threshold": {
+          "type": ["number", "string", "null"],
+          "description": "Optional threshold used by the rule (number or human-readable string)."
+        },
+        "observed_value": {
+          "type": ["number", "string", "null"],
+          "description": "Observed value that crossed the threshold (number or human-readable string)."
+        },
+        "trigger_rule_id": {
+          "type": "string",
+          "description": "Rule ID that fired (e.g., T1, T2...).",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      }
+    },
+
+    "evidence": {
+      "type": "array",
+      "description": "3–5 concise facts supporting the trigger and diagnosis.",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fact", "value", "window", "source_event_type"],
+        "properties": {
+          "fact": { "type": "string", "minLength": 3 },
+          "value": { "type": ["string", "number", "integer", "boolean", "null"] },
+          "window": {
+            "type": "string",
+            "description": "Scope of evidence (e.g., last_5, last_10, whole_session, t-30s..t).",
+            "minLength": 1
+          },
+          "source_event_type": {
+            "type": "string",
+            "description": "Event type in logs from which the evidence is derived.",
+            "minLength": 1
+          },
+          "source_event_ids": {
+            "type": "array",
+            "description": "Optional event IDs supporting this evidence.",
+            "items": { "type": "string" },
+            "minItems": 1
+          }
+        }
+      }
+    },
+
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hypothesis", "confidence", "diagnosis_rule_id"],
+      "properties": {
+        "hypothesis": {
+          "type": "string",
+          "enum": [
+            "MISCONCEPTION",
+            "DISENGAGEMENT",
+            "AMBIGUITY",
+            "SYSTEM_FAULT",
+            "DATA_QUALITY",
+            "UNKNOWN"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in the diagnosis (0..1)."
+        },
+        "diagnosis_rule_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "description": "Rule ID used for diagnosis (e.g., D1...)."
+        },
+        "alternatives": {
+          "type": "array",
+          "description": "Optional ranked alternative diagnoses.",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hypothesis", "confidence"],
+            "properties": {
+              "hypothesis": {
+                "type": "string",
+                "enum": [
+                  "MISCONCEPTION",
+                  "DISENGAGEMENT",
+                  "AMBIGUITY",
+                  "SYSTEM_FAULT",
+                  "DATA_QUALITY",
+                  "UNKNOWN"
+                ]
+              },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+
+    "recovery_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_type", "parameters", "action_rule_id"],
+      "properties": {
+        "action_type": {
+          "type": "string",
+          "enum": [
+            "PREREQUISITE_STEP",
+            "EASIER_ITEMS",
+            "DIAGNOSTIC_ITEM",
+            "HINT",
+            "FALLBACK_AGENT",
+            "RETRY",
+            "CIRCUIT_BREAK",
+            "DEGRADED_MODE"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Action-specific parameters (kept flexible for MVP).",
+          "additionalProperties": true
+        },
+        "action_rule_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "description": "Rule ID used for selecting the action (e.g., R1...)."
+        }
+      }
+    },
+
+    "expected_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "target_direction", "check_after_steps"],
+      "properties": {
+        "metric": { "type": "string", "minLength": 1 },
+        "target_direction": {
+          "type": "string",
+          "enum": ["UP", "DOWN", "STABLE"]
+        },
+        "check_after_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "After how many next interactions/items to evaluate effect."
+        },
+        "success_criteria": {
+          "type": ["string", "null"],
+          "description": "Optional human-readable condition for success."
+        }
+      }
+    },
+
+    "explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["teacher_summary", "technical_trace"],
+      "properties": {
+        "teacher_summary": {
+          "type": "string",
+          "description": "2–3 sentence non-technical explanation for a teacher.",
+          "minLength": 10,
+          "maxLength": 450
+        },
+        "technical_trace": {
+          "type": "string",
+          "description": "Compact technical trace referencing rules/metrics.",
+          "minLength": 10,
+          "maxLength": 900
+        },
+        "limitations": {
+          "type": ["string", "null"],
+          "description": "Optional limitations/uncertainties (short).",
+          "maxLength": 300
+        }
+      }
+    },
+
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orchestrator", "agents_involved", "source_event_range", "hashes"],
+      "properties": {
+        "orchestrator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 }
+          }
+        },
+
+        "agents_involved": {
+          "type": "array",
+          "description": "Agents that contributed signals/recommendations (names stable).",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["agent_name", "agent_role"],
+            "properties": {
+              "agent_name": { "type": "string", "minLength": 1 },
+              "agent_role": { "type": "string", "minLength": 1 },
+              "agent_version": { "type": ["string", "null"] }
+            }
+          }
+        },
+
+        "source_event_range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["first_event_id", "last_event_id"],
+          "properties": {
+            "first_event_id": { "type": "string", "minLength": 1 },
+            "last_event_id": { "type": "string", "minLength": 1 }
+          }
+        },
+
+        "hashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["log_sha256", "explanation_sha256"],
+          "properties": {
+            "log_sha256": { "type": "string", "minLength": 16 },
+            "explanation_sha256": { "type": "string", "minLength": 16 }
+          }
+        },
+
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Optional short audit notes.",
+          "maxLength": 400
+        }
+      }
+    }
+  }
+}

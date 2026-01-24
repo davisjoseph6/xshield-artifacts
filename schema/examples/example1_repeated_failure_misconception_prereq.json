@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1",
+  "episode_id": "s01_ep1",
+  "session_id": "s01",
+  "timestamp_start": "2026-01-22T10:00:12Z",
+  "timestamp_end": "2026-01-22T10:00:20Z",
+  "trigger": {
+    "trigger_type": "REPEATED_FAILURE",
+    "threshold": 0.6,
+    "observed_value": 0.8,
+    "trigger_rule_id": "T1"
+  },
+  "evidence": [
+    {"fact": "Wrong answers in last 5 items", "value": 4, "window": "last_5", "source_event_type": "ANSWER_RECORDED"},
+    {"fact": "Confidence dropped on Fractions", "value": "0.72→0.41", "window": "last_5", "source_event_type": "MONITOR_SIGNAL"},
+    {"fact": "Repeated error on same sub-skill", "value": "common_denominators", "window": "last_5", "source_event_type": "ANSWER_RECORDED"}
+  ],
+  "diagnosis": {
+    "hypothesis": "MISCONCEPTION",
+    "confidence": 0.7,
+    "diagnosis_rule_id": "D2"
+  },
+  "recovery_action": {
+    "action_type": "PREREQUISITE_STEP",
+    "parameters": {"concept": "Common denominators", "n_items": 2},
+    "action_rule_id": "R3"
+  },
+  "expected_effect": {
+    "metric": "error_rate_last_5",
+    "target_direction": "DOWN",
+    "check_after_steps": 2
+  },
+  "explanation": {
+    "teacher_summary": "The system detected repeated errors and low confidence. It switched to two prerequisite questions on common denominators before continuing.",
+    "technical_trace": "Trigger T1 fired. Diagnosis D2: MISCONCEPTION. Action R3: PREREQUISITE_STEP."
+  },
+  "audit": {
+    "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
+    "agents_involved": [{"agent_name": "MonitorAgent", "agent_role": "monitoring"}],
+    "source_event_range": {"first_event_id": "e12", "last_event_id": "e21"},
+    "hashes": {"log_sha256": "abc123", "explanation_sha256": "def456"}
+  }
+}
