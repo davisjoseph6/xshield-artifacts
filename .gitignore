@@ -19,6 +19,7 @@ venv/
 # Env files
 .env
 
-# OS
+# OS / editor
 .DS_Store
+.vscode/
 

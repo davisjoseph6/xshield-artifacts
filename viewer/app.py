@@ -93,7 +93,7 @@ if show_baseline:
             "payload_preview": payload_preview(e.get("payload", {})),
         })
     df = pd.DataFrame(rows).sort_values("step")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
 
     with st.expander("Raw JSONL (parsed)"):
         st.json(events)
