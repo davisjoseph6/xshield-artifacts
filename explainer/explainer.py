@@ -5,6 +5,14 @@ Reads JSONL scenario event logs and generates:
 - `*_xshield.json`: a structured explanation object (X-SHIELD schema, v0.1)
 - `*_summary.txt`: a short teacher-facing summary (2–3 sentences)
 
+High-level guarantees (evidence selection):
+- Evidence is computed from a window around the trigger (k events before + rest of episode).
+- Evidence is forced to include, when available:
+  1) trigger-firing fact (TRIGGER_DETECTED payload),
+  2) diagnosis-supporting fact (DIAGNOSIS_SELECTED payload),
+  3) recovery action evidence (RECOVERY_SELECTED payload),
+  4) post-check evidence (POST_CHECK payload) [optional but recommended].
+
 CLI:
     python explainer/explainer.py --in data/scenarios --out data/xshield_outputs
 """
@@ -16,7 +24,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from templates import render_teacher_summary
 
@@ -49,7 +57,11 @@ def read_jsonl(path: Path) -> List[Dict[str, Any]]:
     return events
 
 
-def find_last_before(events: List[Dict[str, Any]], end_idx: int, event_type: str) -> Optional[Dict[str, Any]]:
+def find_last_before(
+    events: List[Dict[str, Any]],
+    end_idx: int,
+    event_type: str
+) -> Optional[Dict[str, Any]]:
     """Return last event of type `event_type` at or before `end_idx`."""
     for i in range(end_idx, -1, -1):
         if events[i].get("event_type") == event_type:
@@ -89,7 +101,6 @@ def infer_target_direction(metric: str) -> str:
 
 def compute_check_after_steps(recovery_selected: List[Dict[str, Any]]) -> int:
     """Compute check_after_steps from the most recent recovery params that specify pacing."""
-    # Look from the last selected action backwards, until we find n_items or max_retries.
     for ev in reversed(recovery_selected):
         params = ev.get("payload", {}).get("parameters", {})
         if isinstance(params, dict):
@@ -100,7 +111,11 @@ def compute_check_after_steps(recovery_selected: List[Dict[str, Any]]) -> int:
     return 2
 
 
-def extract_context(events: List[Dict[str, Any]], slice_: EpisodeSlice, episode_events: List[Dict[str, Any]]) -> Dict[str, Any]:
+def extract_context(
+    events: List[Dict[str, Any]],
+    slice_: EpisodeSlice,
+    episode_events: List[Dict[str, Any]]
+) -> Dict[str, Any]:
     """Extract lightweight context for templating (concepts, counts)."""
     context: Dict[str, Any] = {}
 
@@ -144,49 +159,90 @@ def extract_context(events: List[Dict[str, Any]], slice_: EpisodeSlice, episode_
     return context
 
 
-def select_evidence(episode_events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Select 3–5 evidence facts (schema-compliant evidence items)."""
-    evidence: List[Dict[str, Any]] = []
+def _mk_event_fact(
+    ev: Dict[str, Any],
+    fact: str,
+    window: str
+) -> Dict[str, Any]:
+    """Build a schema-compliant evidence item from a raw event."""
+    return {
+        "fact": fact,
+        "value": ev.get("payload", {}),
+        "window": window,
+        "source_event_type": ev.get("event_type", "unknown"),
+        "source_event_ids": [ev.get("event_id", "unknown")],
+    }
 
-    answers = [e for e in episode_events if e.get("event_type") == "ANSWER_RECORDED"]
-    signals = [e for e in episode_events if e.get("event_type") == "MONITOR_SIGNAL"]
-    faults = [e for e in episode_events if e.get("event_type") in ("AGENT_TIMEOUT", "OUTPUT_INVALID", "CONFLICTING_RECOMMENDATIONS")]
 
-    if answers:
-        last5 = answers[-5:]
-        wrong = sum(1 for a in last5 if not a.get("payload", {}).get("correct", False))
-        concept_counts: Dict[str, int] = {}
-        for a in last5:
-            c = a.get("payload", {}).get("concept", "unknown")
-            concept_counts[c] = concept_counts.get(c, 0) + (0 if a.get("payload", {}).get("correct", False) else 1)
-        top_concept = max(concept_counts.items(), key=lambda kv: kv[1])[0]
+def _add_unique_evidence(
+    evidence: List[Dict[str, Any]],
+    item: Dict[str, Any],
+    seen_keys: set
+) -> None:
+    """Append evidence if it's not a duplicate (by (fact, source_event_ids))."""
+    key = (item.get("fact"), tuple(item.get("source_event_ids", [])))
+    if key in seen_keys:
+        return
+    evidence.append(item)
+    seen_keys.add(key)
 
-        evidence.append({
-            "fact": "Wrong answers in last 5 items",
+
+def _compute_answer_rollups(events: List[Dict[str, Any]], k: int = 5) -> List[Dict[str, Any]]:
+    """Compute small, high-signal rollups from the last k ANSWER_RECORDED events."""
+    answers = [e for e in events if e.get("event_type") == "ANSWER_RECORDED"]
+    if not answers:
+        return []
+
+    lastk = answers[-k:]
+    wrong = sum(1 for a in lastk if not a.get("payload", {}).get("correct", False))
+
+    concept_counts: Dict[str, int] = {}
+    for a in lastk:
+        c = a.get("payload", {}).get("concept", "unknown")
+        concept_counts[c] = concept_counts.get(c, 0) + (0 if a.get("payload", {}).get("correct", False) else 1)
+    top_concept = max(concept_counts.items(), key=lambda kv: kv[1])[0]
+
+    last_id = lastk[-1].get("event_id", "unknown")
+    return [
+        {
+            "fact": f"Wrong answers in last {len(lastk)} items",
             "value": wrong,
-            "window": "last_5",
+            "window": f"last_{len(lastk)}",
             "source_event_type": "ANSWER_RECORDED",
-            "source_event_ids": [last5[-1].get("event_id", "unknown")],
-        })
-        evidence.append({
-            "fact": "Most frequent error concept in last 5 items",
+            "source_event_ids": [last_id],
+        },
+        {
+            "fact": f"Most frequent error concept in last {len(lastk)} items",
             "value": top_concept,
-            "window": "last_5",
+            "window": f"last_{len(lastk)}",
             "source_event_type": "ANSWER_RECORDED",
-            "source_event_ids": [last5[-1].get("event_id", "unknown")],
-        })
+            "source_event_ids": [last_id],
+        },
+    ]
 
-    for sig in signals[-2:]:
+
+def _compute_signal_facts(events: List[Dict[str, Any]], limit: int = 2) -> List[Dict[str, Any]]:
+    """Extract up to `limit` latest MONITOR_SIGNAL facts."""
+    signals = [e for e in events if e.get("event_type") == "MONITOR_SIGNAL"]
+    out: List[Dict[str, Any]] = []
+    for sig in signals[-limit:]:
         payload = sig.get("payload", {})
-        evidence.append({
+        out.append({
             "fact": f"Monitor signal {payload.get('signal_name', 'unknown')}",
             "value": payload.get("value"),
             "window": payload.get("details", {}).get("window", "episode"),
             "source_event_type": "MONITOR_SIGNAL",
             "source_event_ids": [sig.get("event_id", "unknown")],
         })
+    return out
 
-    for fev in faults[-2:]:
+
+def _compute_fault_facts(events: List[Dict[str, Any]], limit: int = 2) -> List[Dict[str, Any]]:
+    """Extract up to `limit` latest system fault facts."""
+    fault_types = ("AGENT_TIMEOUT", "OUTPUT_INVALID", "CONFLICTING_RECOMMENDATIONS")
+    faults = [e for e in events if e.get("event_type") in fault_types]
+    out: List[Dict[str, Any]] = []
+    for fev in faults[-limit:]:
         payload = fev.get("payload", {})
         if fev.get("event_type") == "AGENT_TIMEOUT":
             fact = "Agent timeout"
@@ -198,31 +254,93 @@ def select_evidence(episode_events: List[Dict[str, Any]]) -> List[Dict[str, Any]
             fact = "Conflicting recommendations"
             val = payload.get("conflict_score", "unknown")
 
-        evidence.append({
+        out.append({
             "fact": fact,
             "value": val,
             "window": "episode",
             "source_event_type": fev.get("event_type"),
             "source_event_ids": [fev.get("event_id", "unknown")],
         })
+    return out
 
-    evidence = evidence[:5]
 
-    # Ensure at least 3
+def select_evidence(
+    window_events: List[Dict[str, Any]],
+    trigger_ev: Dict[str, Any],
+    diagnosis_ev: Optional[Dict[str, Any]],
+    recovery_evs: List[Dict[str, Any]],
+    post_check_ev: Optional[Dict[str, Any]],
+    max_items: int = 5
+) -> List[Dict[str, Any]]:
+    """Select 3–5 evidence facts (schema-compliant), guaranteed to include key episode anchors.
+
+    Guarantees (if the corresponding event exists):
+    - Trigger fact (TRIGGER_DETECTED) is included.
+    - Diagnosis fact (DIAGNOSIS_SELECTED) is included.
+    - Recovery action fact (last RECOVERY_SELECTED) is included.
+    - Post-check fact (POST_CHECK) is included.
+    """
+    evidence: List[Dict[str, Any]] = []
+    seen: set = set()
+
+    # 1) Force required anchor facts first (so we never "trim them out").
+    _add_unique_evidence(
+        evidence,
+        _mk_event_fact(trigger_ev, "Trigger detected", window="episode"),
+        seen
+    )
+
+    if diagnosis_ev is not None:
+        _add_unique_evidence(
+            evidence,
+            _mk_event_fact(diagnosis_ev, "Diagnosis selected", window="episode"),
+            seen
+        )
+
+    if recovery_evs:
+        # Prefer the final selected recovery (closest to what was executed).
+        _add_unique_evidence(
+            evidence,
+            _mk_event_fact(recovery_evs[-1], "Recovery action selected", window="episode"),
+            seen
+        )
+
+    if post_check_ev is not None:
+        _add_unique_evidence(
+            evidence,
+            _mk_event_fact(post_check_ev, "Post-check performed", window="episode"),
+            seen
+        )
+
+    # 2) Add compact supporting facts (rollups + latest signals/faults) until max_items.
+    # These provide "why" context beyond the anchor event payloads.
+    for item in _compute_answer_rollups(window_events, k=5):
+        if len(evidence) >= max_items:
+            break
+        _add_unique_evidence(evidence, item, seen)
+
+    for item in _compute_signal_facts(window_events, limit=2):
+        if len(evidence) >= max_items:
+            break
+        _add_unique_evidence(evidence, item, seen)
+
+    for item in _compute_fault_facts(window_events, limit=2):
+        if len(evidence) >= max_items:
+            break
+        _add_unique_evidence(evidence, item, seen)
+
+    # 3) Ensure minimum length (3) with lightweight fallbacks if needed.
     if len(evidence) < 3:
-        for ev in episode_events:
-            if ev.get("event_type") in ("TRIGGER_DETECTED", "DIAGNOSIS_SELECTED", "RECOVERY_SELECTED"):
-                evidence.append({
-                    "fact": f"Event {ev.get('event_type')}",
-                    "value": ev.get("payload", {}),
-                    "window": "episode",
-                    "source_event_type": ev.get("event_type"),
-                    "source_event_ids": [ev.get("event_id", "unknown")],
-                })
+        for ev in window_events:
+            et = ev.get("event_type")
+            if et in ("TRIGGER_DETECTED", "DIAGNOSIS_SELECTED", "RECOVERY_SELECTED", "POST_CHECK"):
+                item = _mk_event_fact(ev, f"Event {et}", window="episode")
+                _add_unique_evidence(evidence, item, seen)
             if len(evidence) >= 3:
                 break
 
-    return evidence[:5]
+    # 4) Trim (anchors already placed first).
+    return evidence[:max_items]
 
 
 def sha256_text(s: str) -> str:
@@ -230,7 +348,14 @@ def sha256_text(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
 
-def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: EpisodeSlice, episode_idx: int) -> Dict[str, Any]:
+def build_xshield(
+    scenario_path: Path,
+    events: List[Dict[str, Any]],
+    slice_: EpisodeSlice,
+    episode_idx: int,
+    *,
+    evidence_pre_k: int = 5
+) -> Dict[str, Any]:
     """Build a single X-SHIELD explanation object for one episode (schema compliant)."""
     episode_events = events[slice_.start_idx: slice_.end_idx + 1]
     session_id = episode_events[0].get("session_id", "unknown")
@@ -239,12 +364,8 @@ def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: Epi
     trigger_ev = episode_events[0]
     trigger_payload = trigger_ev.get("payload", {})
 
-    trigger_type = trigger_payload.get("trigger_type")
-    trigger_rule_id = trigger_payload.get("rule_id")
-    if not trigger_type:
-        trigger_type = "REPEATED_FAILURE"
-    if not trigger_rule_id:
-        trigger_rule_id = "T0"
+    trigger_type = trigger_payload.get("trigger_type") or "REPEATED_FAILURE"
+    trigger_rule_id = trigger_payload.get("rule_id") or "T0"
 
     last_signal = find_last_before(events, slice_.start_idx, "MONITOR_SIGNAL")
     if last_signal is not None:
@@ -278,10 +399,18 @@ def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: Epi
 
     check_after_steps = compute_check_after_steps(recovery_selected)
 
-    # Evidence: include small context before trigger so evidence matches cause
-    context_start = max(0, slice_.start_idx - 5)
-    context_events = events[context_start: slice_.end_idx + 1]
-    evidence = select_evidence(context_events)
+    # Evidence window: k events before trigger + all events in the episode
+    context_start = max(0, slice_.start_idx - max(0, int(evidence_pre_k)))
+    window_events = events[context_start: slice_.end_idx + 1]
+
+    evidence = select_evidence(
+        window_events=window_events,
+        trigger_ev=trigger_ev,
+        diagnosis_ev=diagnosis_ev,
+        recovery_evs=recovery_selected,
+        post_check_ev=post_check_ev,
+        max_items=5,
+    )
 
     context = extract_context(events, slice_, episode_events)
     context["check_after_steps"] = check_after_steps
@@ -314,7 +443,7 @@ def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: Epi
     first_event_id = trigger_ev.get("event_id", "unknown")
     last_event_id = (post_check_ev or episode_events[-1]).get("event_id", "unknown")
 
-    log_slice_text = json.dumps(context_events, ensure_ascii=False, sort_keys=True)
+    log_slice_text = json.dumps(window_events, ensure_ascii=False, sort_keys=True)
     explanation_text = json.dumps(
         {"teacher_summary": teacher_summary, "technical_trace": technical_trace},
         ensure_ascii=False,
@@ -357,7 +486,10 @@ def build_xshield(scenario_path: Path, events: List[Dict[str, Any]], slice_: Epi
             "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
             "agents_involved": agents_involved,
             "source_event_range": {"first_event_id": first_event_id, "last_event_id": last_event_id},
-            "hashes": {"log_sha256": sha256_text(log_slice_text), "explanation_sha256": sha256_text(explanation_text)},
+            "hashes": {
+                "log_sha256": sha256_text(log_slice_text),
+                "explanation_sha256": sha256_text(explanation_text),
+            },
             "notes": f"scenario_file={scenario_path.name}",
         },
     }
@@ -379,6 +511,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generate X-SHIELD explanations from JSONL scenarios.")
     parser.add_argument("--in", dest="in_dir", required=True, help="Input directory with *.jsonl scenarios")
     parser.add_argument("--out", dest="out_dir", required=True, help="Output directory for xshield outputs")
+    parser.add_argument(
+        "--evidence-pre-k",
+        dest="evidence_pre_k",
+        type=int,
+        default=5,
+        help="Number of events to include before TRIGGER_DETECTED when selecting evidence (default: 5)",
+    )
     args = parser.parse_args()
 
     in_dir = Path(args.in_dir)
@@ -393,7 +532,14 @@ def main() -> int:
         episodes = slice_episodes(events)
         if not episodes:
             continue
-        xshield = build_xshield(spath, events, episodes[0], episode_idx=1)
+
+        xshield = build_xshield(
+            spath,
+            events,
+            episodes[0],
+            episode_idx=1,
+            evidence_pre_k=args.evidence_pre_k,
+        )
         stem = spath.stem.replace("_events", "")
         write_outputs(out_dir, stem, xshield)
 
