@@ -3,37 +3,72 @@
   "episode_id": "s03_ep1",
   "session_id": "s03",
   "timestamp_start": "2026-01-22T10:12:40Z",
-  "timestamp_end": "2026-01-22T10:12:55Z",
+  "timestamp_end": "2026-01-22T10:13:05Z",
   "trigger": {
     "trigger_type": "AGENT_TIMEOUT",
-    "trigger_rule_id": "T4"
+    "trigger_rule_id": "T4",
+    "observed_value": "ItemSelectionAgent timeout at 5s",
+    "threshold": "max_agent_latency=5s"
   },
   "evidence": [
-    {"fact": "Evaluation agent timeout", "value": "5021ms", "window": "t-5s..t", "source_event_type": "AGENT_TIMEOUT"}
+    {
+      "fact": "Agent latency exceeded limit",
+      "value": "6.1s",
+      "window": "t-6s..t",
+      "source_event_type": "AGENT_HEARTBEAT",
+      "source_event_ids": ["e40"]
+    },
+    {
+      "fact": "Primary agent failed to return output",
+      "value": true,
+      "window": "t-6s..t",
+      "source_event_type": "AGENT_TIMEOUT",
+      "source_event_ids": ["e41"]
+    },
+    {
+      "fact": "Fallback agent available",
+      "value": "RuleBasedItemSelector",
+      "window": "whole_session",
+      "source_event_type": "SYSTEM_STATE",
+      "source_event_ids": ["e10"]
+    }
   ],
   "diagnosis": {
     "hypothesis": "SYSTEM_FAULT",
-    "confidence": 0.8,
-    "diagnosis_rule_id": "D5"
+    "confidence": 0.75,
+    "diagnosis_rule_id": "D5",
+    "alternatives": [
+      { "hypothesis": "UNKNOWN", "confidence": 0.15 }
+    ]
   },
   "recovery_action": {
     "action_type": "FALLBACK_AGENT",
-    "parameters": {"failed_agent": "PrimaryEvalAgent", "fallback_agent": "FallbackEvalAgent"},
-    "action_rule_id": "R6"
+    "parameters": { "fallback_agent": "RuleBasedItemSelector", "reason": "primary_timeout" },
+    "action_rule_id": "R5"
   },
   "expected_effect": {
-    "metric": "evaluation_latency",
+    "metric": "agent_response_latency",
     "target_direction": "DOWN",
-    "check_after_steps": 1
+    "check_after_steps": 1,
+    "success_criteria": "Next selection produced within latency limit"
   },
   "explanation": {
-    "teacher_summary": "The main evaluation agent timed out. The system switched to a backup agent to continue the session.",
-    "technical_trace": "Trigger T4 fired. Diagnosis D5: SYSTEM_FAULT. Action R6: FALLBACK_AGENT."
+    "teacher_summary": "The system detected a timeout in the item selection agent. It switched to a fallback selector to keep the session running smoothly.",
+    "technical_trace": "Trigger T4 fired (AGENT_TIMEOUT). Diagnosis D5: SYSTEM_FAULT (0.75). Action R5: FALLBACK_AGENT (RuleBasedItemSelector).",
+    "limitations": "Fallback agent may be less personalized than the primary model."
   },
   "audit": {
-    "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
-    "agents_involved": [{"agent_name": "FallbackEvalAgent", "agent_role": "evaluation"}],
-    "source_event_range": {"first_event_id": "e47", "last_event_id": "e52"},
-    "hashes": {"log_sha256": "ccc333", "explanation_sha256": "ddd444"}
+    "orchestrator": { "name": "SelfHealingOrchestrator", "version": "0.1" },
+    "agents_involved": [
+      { "agent_name": "MonitorAgent", "agent_role": "monitoring", "agent_version": "0.1" },
+      { "agent_name": "RecoveryAgent", "agent_role": "recovery", "agent_version": "0.1" }
+    ],
+    "source_event_range": { "first_event_id": "e35", "last_event_id": "e45" },
+    "hashes": {
+      "log_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "explanation_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "notes": "Example uses placeholder SHA-256 values for schema validation."
   }
 }
+

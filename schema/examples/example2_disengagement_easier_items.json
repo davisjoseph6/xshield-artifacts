@@ -6,11 +6,32 @@
   "timestamp_end": "2026-01-22T10:05:10Z",
   "trigger": {
     "trigger_type": "UNCERTAINTY_SPIKE",
-    "trigger_rule_id": "T2"
+    "trigger_rule_id": "T2",
+    "observed_value": 0.82,
+    "threshold": 0.75
   },
   "evidence": [
-    {"fact": "Very fast responses", "value": "1.2s", "window": "last_5", "source_event_type": "ANSWER_RECORDED"},
-    {"fact": "High uncertainty", "value": 0.82, "window": "last_5", "source_event_type": "MONITOR_SIGNAL"}
+    {
+      "fact": "Very fast responses",
+      "value": "1.2s",
+      "window": "last_5",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": ["e29", "e31", "e33", "e35", "e37"]
+    },
+    {
+      "fact": "High uncertainty",
+      "value": 0.82,
+      "window": "last_5",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_ids": ["e30", "e32", "e34", "e36", "e38"]
+    },
+    {
+      "fact": "Guess-rate elevated",
+      "value": 0.6,
+      "window": "last_5",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_ids": ["e30", "e32", "e34", "e36", "e38"]
+    }
   ],
   "diagnosis": {
     "hypothesis": "DISENGAGEMENT",
@@ -19,22 +40,28 @@
   },
   "recovery_action": {
     "action_type": "EASIER_ITEMS",
-    "parameters": {"difficulty_shift": -1, "n_items": 3},
+    "parameters": { "difficulty_shift": -1, "n_items": 3 },
     "action_rule_id": "R2"
   },
   "expected_effect": {
-    "metric": "engagement_latency",
+    "metric": "engagement_score",
     "target_direction": "UP",
     "check_after_steps": 3
   },
   "explanation": {
     "teacher_summary": "The system detected possible guessing and low engagement. It switched to easier questions to restore confidence.",
-    "technical_trace": "Trigger T2 fired. Diagnosis D3: DISENGAGEMENT. Action R2: EASIER_ITEMS."
+    "technical_trace": "Trigger T2 fired (uncertainty spike). Diagnosis D3: DISENGAGEMENT. Action R2: EASIER_ITEMS (n_items=3, shift=-1)."
   },
   "audit": {
-    "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
-    "agents_involved": [{"agent_name": "MonitorAgent", "agent_role": "monitoring"}],
-    "source_event_range": {"first_event_id": "e29", "last_event_id": "e37"},
-    "hashes": {"log_sha256": "aaa111", "explanation_sha256": "bbb222"}
+    "orchestrator": { "name": "SelfHealingOrchestrator", "version": "0.1" },
+    "agents_involved": [
+      { "agent_name": "MonitorAgent", "agent_role": "monitoring", "agent_version": "0.1" }
+    ],
+    "source_event_range": { "first_event_id": "e29", "last_event_id": "e38" },
+    "hashes": {
+      "log_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "explanation_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
   }
 }
+

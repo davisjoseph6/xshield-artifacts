@@ -6,10 +6,32 @@
   "timestamp_end": "2026-01-22T10:20:30Z",
   "trigger": {
     "trigger_type": "OUTPUT_INVALID",
-    "trigger_rule_id": "T6"
+    "trigger_rule_id": "T6",
+    "observed_value": "missing required field",
+    "threshold": "schema-valid JSON"
   },
   "evidence": [
-    {"fact": "Invalid JSON output", "value": "missing field", "window": "t-2s..t", "source_event_type": "OUTPUT_VALIDATION_FAILED"}
+    {
+      "fact": "Invalid JSON output",
+      "value": "missing field",
+      "window": "t-2s..t",
+      "source_event_type": "OUTPUT_VALIDATION_FAILED",
+      "source_event_ids": ["e66"]
+    },
+    {
+      "fact": "Repeated validation failures",
+      "value": 2,
+      "window": "t-10s..t",
+      "source_event_type": "OUTPUT_VALIDATION_FAILED",
+      "source_event_ids": ["e65", "e66"]
+    },
+    {
+      "fact": "Upstream data flagged as low-quality",
+      "value": true,
+      "window": "t-10s..t",
+      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_ids": ["e64"]
+    }
   ],
   "diagnosis": {
     "hypothesis": "DATA_QUALITY",
@@ -17,8 +39,13 @@
     "diagnosis_rule_id": "D7"
   },
   "recovery_action": {
-    "action_type": "RETRY",
-    "parameters": {"agent": "ItemSelectionAgent", "max_retries": 1},
+    "action_type": "DEGRADED_MODE",
+    "parameters": {
+      "reason": "validation_failed_after_retry",
+      "previous_action": "RETRY",
+      "max_retries": 1,
+      "agent": "ItemSelectionAgent"
+    },
     "action_rule_id": "R7"
   },
   "expected_effect": {
@@ -27,13 +54,19 @@
     "check_after_steps": 1
   },
   "explanation": {
-    "teacher_summary": "The system detected an invalid output and retried with cleaned data. If it fails again, it will switch to degraded mode.",
-    "technical_trace": "Trigger T6 fired. Diagnosis D7: DATA_QUALITY. Action R7: RETRY then DEGRADED_MODE."
+    "teacher_summary": "The system detected an invalid output and signs of low-quality input data. It switched to degraded mode to ensure a safe, schema-valid output path.",
+    "technical_trace": "Trigger T6 fired. Diagnosis D7: DATA_QUALITY. Action R7: DEGRADED_MODE (after RETRY max_retries=1)."
   },
   "audit": {
-    "orchestrator": {"name": "SelfHealingOrchestrator", "version": "0.1"},
-    "agents_involved": [{"agent_name": "RecoveryAgent", "agent_role": "recovery"}],
-    "source_event_range": {"first_event_id": "e66", "last_event_id": "e71"},
-    "hashes": {"log_sha256": "eee555", "explanation_sha256": "fff666"}
+    "orchestrator": { "name": "SelfHealingOrchestrator", "version": "0.1" },
+    "agents_involved": [
+      { "agent_name": "RecoveryAgent", "agent_role": "recovery", "agent_version": "0.1" }
+    ],
+    "source_event_range": { "first_event_id": "e64", "last_event_id": "e71" },
+    "hashes": {
+      "log_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "explanation_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
   }
 }
+
