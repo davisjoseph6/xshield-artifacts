@@ -12,30 +12,48 @@
   },
   "evidence": [
     {
+      "fact": "Trigger detected",
+      "value": "REPEATED_FAILURE (observed=0.8, threshold=0.6, rule=T1)",
+      "window": "episode",
+      "source_event_type": "TRIGGER_DETECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": "MISCONCEPTION (confidence=0.7, rule=D2)",
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": "PREREQUISITE_STEP (params={\"concept\": \"Common denominators\", \"n_items\": 2}, rule=R3)",
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e07"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": "error_rate_last_5=0.4",
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e11"
+      ]
+    },
+    {
       "fact": "Wrong answers in last 5 items",
       "value": 2,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
       "source_event_ids": [
         "e10"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Fractions",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e10"
-      ]
-    },
-    {
-      "fact": "Monitor signal error_rate_last_5",
-      "value": 0.8,
-      "window": "last_5",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e04"
       ]
     }
   ],

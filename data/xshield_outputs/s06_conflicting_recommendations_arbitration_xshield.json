@@ -12,39 +12,48 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 1,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e01"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Thermodynamics",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e01"
-      ]
-    },
-    {
-      "fact": "Monitor signal conflict_score",
-      "value": 0.78,
-      "window": "current_step",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e03"
-      ]
-    },
-    {
-      "fact": "Conflicting recommendations",
-      "value": 0.78,
+      "fact": "Trigger detected",
+      "value": "CONFLICTING_RECOMMENDATIONS (observed=0.78, threshold=0.65, rule=T6)",
       "window": "episode",
-      "source_event_type": "CONFLICTING_RECOMMENDATIONS",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": "UNKNOWN (confidence=0.55, rule=D7)",
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": "CIRCUIT_BREAK (params={\"policy\": \"majority_vote\", \"tie_breaker\": \"orchestrator_default\"}, rule=R9)",
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": "conflict_score=0.1",
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e08"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 1 items",
+      "value": 1,
+      "window": "last_1",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e01"
       ]
     }
   ],

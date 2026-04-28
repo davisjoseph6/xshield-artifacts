@@ -12,30 +12,48 @@
   },
   "evidence": [
     {
+      "fact": "Trigger detected",
+      "value": "UNCERTAINTY_SPIKE (observed=0.75, threshold=0.5, rule=T2)",
+      "window": "episode",
+      "source_event_type": "TRIGGER_DETECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": "DISENGAGEMENT (confidence=0.72, rule=D3)",
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": "EASIER_ITEMS (params={\"concept\": \"Algebra\", \"difficulty_delta\": -1, \"n_items\": 3}, rule=R4)",
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e07"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": "engagement_score=0.62",
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e11"
+      ]
+    },
+    {
       "fact": "Wrong answers in last 5 items",
       "value": 2,
       "window": "last_5",
       "source_event_type": "ANSWER_RECORDED",
       "source_event_ids": [
         "e10"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Algebra",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e10"
-      ]
-    },
-    {
-      "fact": "Monitor signal guess_rate_last_5",
-      "value": 0.75,
-      "window": "last_5",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e04"
       ]
     }
   ],

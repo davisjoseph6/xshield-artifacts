@@ -12,39 +12,48 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 0,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Programming",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Monitor signal agent_timeout_rate_last_10",
-      "value": 0.2,
-      "window": "last_10",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e03"
-      ]
-    },
-    {
-      "fact": "Agent timeout",
-      "value": "feedback_agent (2000ms)",
+      "fact": "Trigger detected",
+      "value": "AGENT_TIMEOUT (observed=0.2, threshold=0.1, rule=T4)",
       "window": "episode",
-      "source_event_type": "AGENT_TIMEOUT",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": "SYSTEM_FAULT (confidence=0.74, rule=D5)",
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": "FALLBACK_AGENT (params={\"from_agent\": \"feedback_agent\", \"to_agent\": \"simple_feedback_agent\"}, rule=R6)",
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": "agent_timeout_rate_last_10=0.0",
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e09"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 2 items",
+      "value": 0,
+      "window": "last_2",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e08"
       ]
     }
   ],

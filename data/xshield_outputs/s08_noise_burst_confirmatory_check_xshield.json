@@ -12,30 +12,48 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 0,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e07"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Statistics",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e07"
-      ]
-    },
-    {
-      "fact": "Monitor signal data_noise_score",
-      "value": 0.82,
+      "fact": "Trigger detected",
+      "value": "UNCERTAINTY_SPIKE (observed=0.82, threshold=0.6, rule=T8)",
       "window": "episode",
-      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e03"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": "DATA_QUALITY (confidence=0.68, rule=D9)",
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e04"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": "DIAGNOSTIC_ITEM (params={\"concept\": \"Sanity-check question\", \"n_items\": 1, \"purpose\": \"confirm_noise\"}, rule=R11)",
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": "data_noise_score=0.4",
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e08"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 2 items",
+      "value": 0,
+      "window": "last_2",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e07"
       ]
     }
   ],
