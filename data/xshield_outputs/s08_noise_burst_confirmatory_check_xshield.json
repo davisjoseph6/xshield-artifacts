@@ -12,30 +12,74 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 0,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e07"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Statistics",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e07"
-      ]
-    },
-    {
-      "fact": "Monitor signal data_noise_score",
-      "value": 0.82,
+      "fact": "Trigger detected",
+      "value": {
+        "trigger_type": "UNCERTAINTY_SPIKE",
+        "rule_id": "T8",
+        "threshold": 0.6,
+        "observed_value": 0.82
+      },
       "window": "episode",
-      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e03"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": {
+        "hypothesis": "DATA_QUALITY",
+        "confidence": 0.68,
+        "rule_id": "D9",
+        "details": {
+          "signal": "data_noise_score"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e04"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": {
+        "action_type": "DIAGNOSTIC_ITEM",
+        "parameters": {
+          "purpose": "confirm_noise",
+          "n_items": 1,
+          "concept": "Sanity-check question"
+        },
+        "rule_id": "R11"
+      },
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": {
+        "metric": "data_noise_score",
+        "value": 0.4,
+        "details": {
+          "source": "input_stream"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e08"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 2 items",
+      "value": 0,
+      "window": "last_2",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e07"
       ]
     }
   ],

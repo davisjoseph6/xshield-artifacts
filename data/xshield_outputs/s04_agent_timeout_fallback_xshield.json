@@ -12,39 +12,73 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 0,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Programming",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Monitor signal agent_timeout_rate_last_10",
-      "value": 0.2,
-      "window": "last_10",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e03"
-      ]
-    },
-    {
-      "fact": "Agent timeout",
-      "value": "feedback_agent (2000ms)",
+      "fact": "Trigger detected",
+      "value": {
+        "trigger_type": "AGENT_TIMEOUT",
+        "rule_id": "T4",
+        "threshold": 0.1,
+        "observed_value": 0.2
+      },
       "window": "episode",
-      "source_event_type": "AGENT_TIMEOUT",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": {
+        "hypothesis": "SYSTEM_FAULT",
+        "confidence": 0.74,
+        "rule_id": "D5",
+        "details": {
+          "failed_agent": "feedback_agent"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": {
+        "action_type": "FALLBACK_AGENT",
+        "parameters": {
+          "from_agent": "feedback_agent",
+          "to_agent": "simple_feedback_agent"
+        },
+        "rule_id": "R6"
+      },
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": {
+        "metric": "agent_timeout_rate_last_10",
+        "value": 0.0,
+        "details": {
+          "window": "last_10"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e09"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 2 items",
+      "value": 0,
+      "window": "last_2",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e08"
       ]
     }
   ],

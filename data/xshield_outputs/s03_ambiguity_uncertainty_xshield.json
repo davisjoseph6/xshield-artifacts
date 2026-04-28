@@ -12,30 +12,74 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
+      "fact": "Trigger detected",
+      "value": {
+        "trigger_type": "UNCERTAINTY_SPIKE",
+        "rule_id": "T3",
+        "threshold": 0.7,
+        "observed_value": 0.86
+      },
+      "window": "episode",
+      "source_event_type": "TRIGGER_DETECTED",
+      "source_event_ids": [
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": {
+        "hypothesis": "AMBIGUITY",
+        "confidence": 0.66,
+        "rule_id": "D4",
+        "details": {
+          "topic": "triangle_similarity"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": {
+        "action_type": "DIAGNOSTIC_ITEM",
+        "parameters": {
+          "concept": "Triangle similarity",
+          "difficulty": 2,
+          "purpose": "disambiguate_rule_choice"
+        },
+        "rule_id": "R5"
+      },
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": {
+        "metric": "uncertainty_mean_last_3",
+        "value": 0.55,
+        "details": {
+          "window": "last_3"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e09"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 3 items",
       "value": 1,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Geometry",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Monitor signal uncertainty_mean_last_3",
-      "value": 0.86,
       "window": "last_3",
-      "source_event_type": "MONITOR_SIGNAL",
+      "source_event_type": "ANSWER_RECORDED",
       "source_event_ids": [
-        "e03"
+        "e08"
       ]
     }
   ],

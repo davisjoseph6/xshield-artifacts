@@ -12,39 +12,73 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
-      "value": 0,
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e01"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Physics",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e01"
-      ]
-    },
-    {
-      "fact": "Monitor signal invalid_output_rate_last_20",
-      "value": 0.15,
-      "window": "last_20",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e03"
-      ]
-    },
-    {
-      "fact": "Invalid output detected",
-      "value": "missing_required_field:choices",
+      "fact": "Trigger detected",
+      "value": {
+        "trigger_type": "OUTPUT_INVALID",
+        "rule_id": "T5",
+        "threshold": 0.05,
+        "observed_value": 0.15
+      },
       "window": "episode",
-      "source_event_type": "OUTPUT_INVALID",
+      "source_event_type": "TRIGGER_DETECTED",
       "source_event_ids": [
-        "e02"
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": {
+        "hypothesis": "DATA_QUALITY",
+        "confidence": 0.63,
+        "rule_id": "D6",
+        "details": {
+          "field": "choices"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": {
+        "action_type": "DEGRADED_MODE",
+        "parameters": {
+          "mode": "template_questions",
+          "reason": "generator_unreliable"
+        },
+        "rule_id": "R8"
+      },
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e08"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": {
+        "metric": "invalid_output_rate_last_20",
+        "value": 0.02,
+        "details": {
+          "window": "last_20"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e10"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 1 items",
+      "value": 0,
+      "window": "last_1",
+      "source_event_type": "ANSWER_RECORDED",
+      "source_event_ids": [
+        "e01"
       ]
     }
   ],

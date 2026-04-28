@@ -12,30 +12,73 @@
   },
   "evidence": [
     {
-      "fact": "Wrong answers in last 5 items",
+      "fact": "Trigger detected",
+      "value": {
+        "trigger_type": "INCONSISTENCY",
+        "rule_id": "T7",
+        "threshold": 0.1,
+        "observed_value": 0.02
+      },
+      "window": "episode",
+      "source_event_type": "TRIGGER_DETECTED",
+      "source_event_ids": [
+        "e04"
+      ]
+    },
+    {
+      "fact": "Diagnosis selected",
+      "value": {
+        "hypothesis": "DISENGAGEMENT",
+        "confidence": 0.6,
+        "rule_id": "D8",
+        "details": {
+          "reason": "stagnation_loop"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "DIAGNOSIS_SELECTED",
+      "source_event_ids": [
+        "e05"
+      ]
+    },
+    {
+      "fact": "Recovery action selected",
+      "value": {
+        "action_type": "HINT",
+        "parameters": {
+          "hint_level": "step_by_step",
+          "concept": "loop_invariants"
+        },
+        "rule_id": "R10"
+      },
+      "window": "episode",
+      "source_event_type": "RECOVERY_SELECTED",
+      "source_event_ids": [
+        "e06"
+      ]
+    },
+    {
+      "fact": "Post-check performed",
+      "value": {
+        "metric": "learning_gain_last_10",
+        "value": 0.12,
+        "details": {
+          "window": "last_10"
+        }
+      },
+      "window": "episode",
+      "source_event_type": "POST_CHECK",
+      "source_event_ids": [
+        "e09"
+      ]
+    },
+    {
+      "fact": "Wrong answers in last 3 items",
       "value": 2,
-      "window": "last_5",
+      "window": "last_3",
       "source_event_type": "ANSWER_RECORDED",
       "source_event_ids": [
         "e08"
-      ]
-    },
-    {
-      "fact": "Most frequent error concept in last 5 items",
-      "value": "Coding",
-      "window": "last_5",
-      "source_event_type": "ANSWER_RECORDED",
-      "source_event_ids": [
-        "e08"
-      ]
-    },
-    {
-      "fact": "Monitor signal learning_gain_last_10",
-      "value": 0.02,
-      "window": "last_10",
-      "source_event_type": "MONITOR_SIGNAL",
-      "source_event_ids": [
-        "e03"
       ]
     }
   ],
